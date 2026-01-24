@@ -1,0 +1,31 @@
+{
+  "name": "desarrollosoftware",
+  "version": "1.0.0",
+  "description": "ProyectoSoftware",
+  "homepage": "https://github.com/FabisDGufm/DesarrolloSoftware#readme",
+  "bugs": {
+    "url": "https://github.com/FabisDGufm/DesarrolloSoftware/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FabisDGufm/DesarrolloSoftware.git"
+  },
+  "license": "ISC",
+  "author": "JD-P-M-F",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node ./dist/app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
