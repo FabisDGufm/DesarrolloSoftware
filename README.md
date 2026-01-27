@@ -39,14 +39,18 @@ Visión
 La idea principal de El Pasillo es unir a los estudiantes de Guatemala, crear vínculos entre universidades y construir una comunidad más fuerte, solidaria y conectada.
 
 
--# Brainstorm
+## Brainstorm
 
-## Ideas de título
+# Ideas de título
 
-* El pasillo
+* El Pasillo
 * El matadero
 * ¿Quién lo dijo?
 * U-niverse
 
-##Ideas en general
+# Ideas en general
+
+* Poder ver noticias de las Universidades
+* Sección de debate sin filtro
+* Noticias y anuncios relevantes
 
