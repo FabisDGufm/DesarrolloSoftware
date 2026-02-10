@@ -1,6 +1,7 @@
 {
   "name": "desarrollosoftware",
   "version": "1.0.0",
+  "type": "module",
   "description": "ProyectoSoftware",
   "homepage": "https://github.com/FabisDGufm/DesarrolloSoftware#readme",
   "bugs": {
@@ -12,10 +13,9 @@
   },
   "license": "ISC",
   "author": "JD-P-M-F",
-  "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src --exec ts-node src/app.ts",
+    "dev": "nodemon --watch src --exec tsx src/app.ts",
     "build": "tsc",
     "start": "node ./dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -26,12 +26,10 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.10",
-<<<<<<< Updated upstream
-    "nodemon": "^3.1.11",
-=======
     "jest": "^30.2.0",
->>>>>>> Stashed changes
+    "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
 }
