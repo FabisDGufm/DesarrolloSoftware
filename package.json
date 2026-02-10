@@ -7,7 +7,6 @@
     "url": "https://github.com/FabisDGufm/DesarrolloSoftware/issues"
   },
   "repository": {
-    "type": "git",
     "url": "git+https://github.com/FabisDGufm/DesarrolloSoftware.git"
   },
   "license": "ISC",
@@ -18,19 +17,20 @@
     "dev": "nodemon --watch src --exec ts-node src/app.ts",
     "build": "tsc",
     "start": "node ./dist/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "dependencies": {
     "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.0.10",
-<<<<<<< Updated upstream
-    "nodemon": "^3.1.11",
-=======
+    "@types/supertest": "^6.0.3",
     "jest": "^30.2.0",
->>>>>>> Stashed changes
+    "nodemon": "^3.1.11",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
