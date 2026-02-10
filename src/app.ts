@@ -1,17 +1,9 @@
 import express from 'express';
 
+const app = express();
 
-const app: express.Application = express();
-const port: number = 3000;
+app.get('/users', (_req, res) => {
+  res.status(200).json({ message: 'ok' });
+});
 
-
-
-app.get('/', (_req, _res) => {
-    _res.send('Hello World!!!!');
-
-})
-
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
-
-})  
+export default app;
