@@ -4,6 +4,7 @@ export interface User {
     email: string;
     password: string;
     friends: number[];
+    role: number;
     createdAt: Date;
 }
 
