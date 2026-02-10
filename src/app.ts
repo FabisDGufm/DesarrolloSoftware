@@ -1,17 +1,19 @@
 import express from 'express';
+import userRoutes from './routes/user-routes.js';
 
+const app = express();
+const port = 3000;
 
-const app: express.Application = express();
-const port: number = 3000;
+// Middleware para leer JSON del body
+app.use(express.json());
 
+// Rutas de usuarios
+app.use('/users', userRoutes);
 
-
-app.get('/', (_req, _res) => {
-    _res.send('Hello World!!!!');
-
-})
+app.get('/', (_req, res) => {
+    res.send('Hello World!!!!');
+});
 
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
-
-})  
+    console.log(`Server running on port ${port}`);
+});

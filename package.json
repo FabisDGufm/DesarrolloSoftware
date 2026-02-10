@@ -26,11 +26,8 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.10",
-<<<<<<< Updated upstream
-    "nodemon": "^3.1.11",
-=======
     "jest": "^30.2.0",
->>>>>>> Stashed changes
+    "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
