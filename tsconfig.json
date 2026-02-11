@@ -10,10 +10,11 @@
     /* ===============================
        Environment Settings
        =============================== */
-    "module": "nodenext",
-    "target": "esnext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
     "lib": ["esnext"],
-    "types": ["node"],
+    "types": ["node", "jest"],
 
     /* ===============================
        Output
@@ -32,8 +33,9 @@
     /* ===============================
        Module / Build Behavior
        =============================== */
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false,
+    "esModuleInterop": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
 

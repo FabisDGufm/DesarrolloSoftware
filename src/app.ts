@@ -14,6 +14,11 @@ app.get('/', (_req, res) => {
     res.send('Hello World!!!!');
 });
 
-app.listen(port, () => {
+// Solo iniciar el servidor si no estamos en tests (para que Jest pueda terminar)
+if (typeof process.env.JEST_WORKER_ID === 'undefined') {
+  app.listen(port, () => {
     console.log(`Server running on port ${port}`);
-});
+  });
+}
+
+export default app;
