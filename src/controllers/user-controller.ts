@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { UserService } from '../services/user-service.js';
 
-
 export class UserController {
     constructor(private userService: UserService) {
         console.log("UserController initialized");
@@ -9,8 +8,12 @@ export class UserController {
 
     register = (req: Request, res: Response) => {
         try {
-            const user = this.userService.registerUser(req.body);
-            res.status(201).json(user);
+            const newUser = this.userService.registerUser(req.body);
+            
+            // NO enviar la contraseña en la respuesta (seguridad)
+            const { password, ...userWithoutPassword } = newUser;
+            
+            res.status(201).json(userWithoutPassword);
         } catch (error: any) {
             res.status(400).json({ error: error.message });
         }
