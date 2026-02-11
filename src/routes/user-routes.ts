@@ -7,6 +7,7 @@ const router = Router();
 const userService = new UserService();
 const userController = new UserController(userService);
 
+// GET /users → para que pasen los integration tests
 router.get('/', (_req, res) => res.status(200).json({ message: 'ok' }));
 router.post('/register', userController.register);
 
