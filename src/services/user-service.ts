@@ -1,7 +1,10 @@
 import type { User, CreateUserDTO, UpdateUserDTO } from '../models/user.js';
+import { UserRelationService } from './user-relation-service.js';
+
 
 export class UserService {
     private passwordMinLength: number = 8;
+    private userRelationService = new UserRelationService();
 
     registerUser(data: CreateUserDTO): User {
         if (!data.password) {
@@ -67,8 +70,8 @@ export class UserService {
     }
 
     // Obtener amigos
-    getFriends(id: number): number[] {
-        console.log("Getting friends to user...");
-        return [3,4,8];
-    }
+    getFriends(userId: number): number[] {
+    return this.userRelationService.getFriends(userId);
+}
+
 }
