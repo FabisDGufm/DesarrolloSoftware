@@ -1,68 +1,197 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import type { UserService } from '../services/user-service.js';
-import type { User } from '../models/user.js'
-
+import type { CreateUserDTO } from '../models/user.js';
+import { ValidationError } from '../utils/custom-errors.js';
 
 export class UserController {
     constructor(private readonly userService: UserService) {
         console.log("UserController initialized");
     }
 
-    // Create
-    registerUser = (_req: Request, _res: Response) => {
-        let user : User = _req.body;
-        let registerUser = this.userService.registerUser(user);
-
-        _res.json(registerUser);
+    registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userData: CreateUserDTO = req.body;
+            const newUser = this.userService.registerUser(userData);
+            
+            const { password, ...userWithoutPassword } = newUser;
+            
+            res.status(201).json({
+                status: 'success',
+                data: userWithoutPassword
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    // Read all
-    getUsers = (_req: Request, _res: Response) => {
-        let users = this.userService.getAllUsers();
-        _res.json(users);
+    getUsers = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const users = this.userService.getAllUsers();
+            res.status(200).json({
+                status: 'success',
+                data: users
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    // Read by name
-    getUserbN = (_req: Request, _res: Response) => {
-        let name = String(_req.params.name);
-        let user = this.userService.getUserbN(name);
-        _res.json(user);
+    getUserbN = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const nameParam = req.params.name;
+            
+            if (!nameParam) {
+                throw new ValidationError('Name parameter is required');
+            }
+            
+            const name = Array.isArray(nameParam) ? nameParam[0] : nameParam;
+            
+            if (!name) {
+                throw new ValidationError('Name parameter is required');
+            }
+            
+            const user = this.userService.getUserbN(name);
+            res.status(200).json({
+                status: 'success',
+                data: user
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    // Update user name
-    updateUserN = (_req: Request, _res: Response) => {
-        let id = Number(_req.params.id);
-        let { user } = _req.body;
-        let result = this.userService.updateUserN(id, user);
-        _res.json(result);
+    updateUserN = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            const { name } = req.body;  // ← CAMBIO AQUÍ: 'name' en lugar de 'user'
+            
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+            
+            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
+            
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+            
+            if (!name) {
+                throw new ValidationError('Name is required');
+            }
+            
+            const result = this.userService.updateUserN(id, name);
+            res.status(200).json({
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    // Update user email
-    updateUserEmail = (_req: Request, _res: Response) => {
-        let id = Number(_req.params.id);
-        let { email } = _req.body;
-        let result = this.userService.updateUserEmail(id, email);
-        _res.json(result);
+    updateUserEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            const { email } = req.body;
+            
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+            
+            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
+            
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+            
+            if (!email) {
+                throw new ValidationError('Email is required');
+            }
+            
+            const result = this.userService.updateUserEmail(id, email);
+            res.status(200).json({
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    // Update user password
-    updateUserP = (_req: Request, _res: Response) => {
-        let id = Number(_req.params.id);
-        let { password } = _req.body;
-        let result = this.userService.updateUserP(id, password);
-        _res.json(result);
+    updateUserP = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            const { password } = req.body;
+            
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+            
+            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
+            
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+            
+            if (!password) {
+                throw new ValidationError('Password is required');
+            }
+            
+            const result = this.userService.updateUserP(id, password);
+            res.status(200).json({
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    // Delete
-    deleteUser = (_req: Request, _res: Response) => {
-        let id = Number(_req.params.id);
-        let result = this.userService.deleteUser(id);
-        _res.json(result);
+    deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+            
+            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
+            
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+            
+            const result = this.userService.deleteUser(id);
+            res.status(200).json({
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    getFriends = (_req: Request, _res: Response) => {
-        let id = Number(_req.params.id);
-        let friends = this.userService.getFriends(id);
-        _res.json(friends);
+    getFriends = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+            
+            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
+            
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+            
+            const friends = this.userService.getFriends(id);
+            res.status(200).json({
+                status: 'success',
+                data: friends
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 }
