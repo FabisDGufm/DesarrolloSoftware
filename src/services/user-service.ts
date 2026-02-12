@@ -111,20 +111,33 @@ export class UserService {
         return user;
     }
 
+    // Actualizar foto de perfil
+    updateProfilePhoto(id: number, profilePhoto: string): User {
+        const user = this.getUserById(id);
+        user.profilePhoto = profilePhoto;
+        return user;
+    }
+
     deleteUser(id: number): { message: string; deletedUser: User } {
         const userIndex = this.users.findIndex(u => u.id === id);
-        
+
         if (userIndex === -1) {
             throw new NotFoundError(`User with ID ${id} not found`);
         }
-        
+
+        // Quitar este usuario de la lista de amigos del resto
+        for (const u of this.users) {
+            const idx = u.friends.indexOf(id);
+            if (idx !== -1) u.friends.splice(idx, 1);
+        }
+
         const deletedUsers = this.users.splice(userIndex, 1);
-        const deletedUser = deletedUsers[0]; // ← CAMBIO AQUÍ
-        
+        const deletedUser = deletedUsers[0];
+
         if (!deletedUser) {
             throw new NotFoundError(`User with ID ${id} not found`);
         }
-        
+
         return {
             message: "User deleted successfully",
             deletedUser

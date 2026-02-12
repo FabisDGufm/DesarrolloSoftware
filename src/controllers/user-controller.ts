@@ -147,6 +147,32 @@ export class UserController {
         }
     }
 
+    // Actualizar foto de perfil
+    updateProfilePhoto = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            const { profilePhoto } = req.body;
+
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+
+            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
+
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+
+            const result = this.userService.updateProfilePhoto(id, profilePhoto ?? '');
+            res.status(200).json({
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const idParam = req.params.id;
