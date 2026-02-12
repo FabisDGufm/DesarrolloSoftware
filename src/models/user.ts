@@ -3,6 +3,7 @@ export interface User {
     name: string;
     email: string;
     password: string;
+    profilePhoto?: string; // URL o ruta de la foto
     friends: number[];
     role: number;
     createdAt: Date;

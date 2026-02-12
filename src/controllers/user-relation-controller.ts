@@ -1,8 +1,13 @@
-import type { Request, Response } from 'express';
-import { UserRelationService } from '../services/user-relation-service.js';
+import type { Request, Response, NextFunction } from 'express';
+import type { UserRelationService } from '../services/user-relation-service.js';
+import type { UserService } from '../services/user-service.js';
+import { ValidationError } from '../utils/custom-errors.js';
 
 export class UserRelationController {
-    constructor(private readonly service: UserRelationService) {}
+    constructor(
+        private readonly service: UserRelationService,
+        private readonly userService: UserService
+    ) {}
 
     // Crear solicitud de amistad
     sendRequest = (_req: Request, _res: Response) => {
@@ -57,5 +62,61 @@ export class UserRelationController {
         const userId = Number(_req.params.id);
         const requests = this.service.getSentRequests(userId);
         _res.json(requests);
+    }
+
+    // Update perfil: nombre y/o foto
+    updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+            const { name, profilePhoto } = req.body; // body puede tener name y/o profilePhoto
+
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+
+            const id = Number(idParam);
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+
+            let user = this.userService.getUserById(id);
+
+            if (name !== undefined && name !== '') {
+                user = this.userService.updateUserN(id, name);
+            }
+            if (profilePhoto !== undefined) {
+                user = this.userService.updateProfilePhoto(id, profilePhoto);
+            }
+
+            res.status(200).json({ status: 'success', data: user });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Delete cuenta: borrar usuario y sus relaciones
+    deleteAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const idParam = req.params.id;
+
+            if (!idParam) {
+                throw new ValidationError('ID parameter is required');
+            }
+
+            const id = Number(idParam);
+            if (isNaN(id)) {
+                throw new ValidationError('Invalid ID format');
+            }
+
+            this.service.removeAllRelationsForUser(id); // primero relaciones
+            const result = this.userService.deleteUser(id); // luego usuario
+
+            res.status(200).json({
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 }

@@ -76,4 +76,11 @@ export class UserRelationService {
     getSentRequests(userId: number): FriendRelation[] {
         return this.relations.filter(r => r.requesterId === userId && r.status === "pending");
     }
+
+    // Borrar todas las relaciones de un usuario (al dar de baja la cuenta)
+    removeAllRelationsForUser(userId: number): void {
+        this.relations = this.relations.filter(
+            r => r.requesterId !== userId && r.receiverId !== userId
+        );
+    }
 }
