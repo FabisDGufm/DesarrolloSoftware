@@ -11,12 +11,12 @@ router.post('/register', userController.registerUser);
 
 // Read all
 router.get('/', userController.getUsers);
-router.get('/:name', userController.getUserbN);
+router.get('/:name', userController.getUserByName);
 
 // Update
-router.put('/:id/name', userController.updateUserN);
+router.put('/:id/name', userController.updateUserName);
 router.put('/:id/email', userController.updateUserEmail);
-router.put('/:id/password', userController.updateUserP);
+router.put('/:id/password', userController.updateUserPassword);
 router.put('/:id/profile-photo', userController.updateProfilePhoto);
 
 // Delete
