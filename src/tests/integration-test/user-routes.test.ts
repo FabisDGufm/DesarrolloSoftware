@@ -1,6 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import userRoutes from '../../routes/user-routes.js';
+import { errorHandler, notFoundHandler } from '../../middlewares/error-handler.js';
 
 describe('User Routes Integration Tests', () => {
     let app: express.Application;
@@ -9,6 +10,9 @@ describe('User Routes Integration Tests', () => {
         app = express();
         app.use(express.json());
         app.use('/users', userRoutes);
+        // Middlewares de error — imprescindibles para que los errores lleguen como JSON
+        app.use(notFoundHandler);
+        app.use(errorHandler);
     });
 
     describe('POST /users/register', () => {
@@ -25,10 +29,11 @@ describe('User Routes Integration Tests', () => {
                 .send(userData)
                 .expect(201);
 
-            expect(response.body).toHaveProperty('id');
-            expect(response.body.name).toBe('John Doe');
-            expect(response.body.email).toBe('john@example.com');
-            expect(response.body).not.toHaveProperty('password');
+            // El controlador devuelve { status: 'success', data: { ...user } }
+            expect(response.body.data).toHaveProperty('id');
+            expect(response.body.data.name).toBe('John Doe');
+            expect(response.body.data.email).toBe('john@example.com');
+            expect(response.body.data).not.toHaveProperty('password');
         });
 
         it('should return 400 for invalid password', async () => {
@@ -44,7 +49,8 @@ describe('User Routes Integration Tests', () => {
                 .send(userData)
                 .expect(400);
 
-            expect(response.body).toHaveProperty('error');
+            expect(response.body).toHaveProperty('message');
+            expect(response.body.status).toBe('error');
         });
 
         it('should return 400 for missing email', async () => {
@@ -60,7 +66,8 @@ describe('User Routes Integration Tests', () => {
                 .send(userData)
                 .expect(400);
 
-            expect(response.body).toHaveProperty('error');
+            expect(response.body).toHaveProperty('message');
+            expect(response.body.status).toBe('error');
         });
     });
 });

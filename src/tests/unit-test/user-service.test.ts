@@ -9,7 +9,7 @@ describe('UserService', () => {
     });
 
     describe('registerUser', () => {
-        it('should create a user with valid data', () => {
+        it('should create a user with valid data', async () => {
             const userData: CreateUserDTO = {
                 name: 'John Doe',
                 email: 'john@example.com',
@@ -17,7 +17,7 @@ describe('UserService', () => {
                 role: 1
             };
 
-            const result = userService.registerUser(userData);
+            const result = await userService.registerUser(userData);
 
             expect(result).toHaveProperty('id');
             expect(result.name).toBe('John Doe');
@@ -26,7 +26,7 @@ describe('UserService', () => {
             expect(result.createdAt).toBeInstanceOf(Date);
         });
 
-        it('should throw error if password is missing', () => {
+        it('should throw error if password is missing', async () => {
             const userData: CreateUserDTO = {
                 name: 'John Doe',
                 email: 'john@example.com',
@@ -34,11 +34,11 @@ describe('UserService', () => {
                 role: 1
             };
 
-            expect(() => userService.registerUser(userData))
-                .toThrow('Password is required');
+            await expect(userService.registerUser(userData))
+                .rejects.toThrow('Password is required');
         });
 
-        it('should throw error if password is too short', () => {
+        it('should throw error if password is too short', async () => {
             const userData: CreateUserDTO = {
                 name: 'John Doe',
                 email: 'john@example.com',
@@ -46,11 +46,11 @@ describe('UserService', () => {
                 role: 1
             };
 
-            expect(() => userService.registerUser(userData))
-                .toThrow('Password must be at least 8 characters');
+            await expect(userService.registerUser(userData))
+                .rejects.toThrow('Password must be at least 8 characters');
         });
 
-        it('should throw error if email is missing', () => {
+        it('should throw error if email is missing', async () => {
             const userData: CreateUserDTO = {
                 name: 'John Doe',
                 email: '',
@@ -58,8 +58,8 @@ describe('UserService', () => {
                 role: 1
             };
 
-            expect(() => userService.registerUser(userData))
-                .toThrow('Email is required');
+            await expect(userService.registerUser(userData))
+                .rejects.toThrow('Email is required');
         });
     });
 });

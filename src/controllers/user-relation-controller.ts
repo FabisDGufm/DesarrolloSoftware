@@ -10,11 +10,11 @@ export class UserRelationController {
     ) {}
 
     // Crear solicitud de amistad
-    sendRequest = (_req: Request, _res: Response) => {
+    sendRequest = async (_req: Request, _res: Response) => {
         const requesterId = Number(_req.params.id);
         const receiverId = Number(_req.params.targetId);
         try {
-            const result = this.service.sendFriendRequest(requesterId, receiverId);
+            const result = await this.service.sendFriendRequest(requesterId, receiverId);
             _res.json(result);
         } catch (err: any) {
             _res.status(400).json({ error: err.message });
@@ -22,10 +22,10 @@ export class UserRelationController {
     }
 
     // Aceptar solicitud
-    acceptRequest = (_req: Request, _res: Response) => {
+    acceptRequest = async (_req: Request, _res: Response) => {
         const requestId = Number(_req.params.requestId);
         try {
-            const result = this.service.acceptFriendRequest(requestId);
+            const result = await this.service.acceptFriendRequest(requestId);
             _res.json(result);
         } catch (err: any) {
             _res.status(400).json({ error: err.message });
@@ -33,10 +33,10 @@ export class UserRelationController {
     }
 
     // Rechazar solicitud
-    rejectRequest = (_req: Request, _res: Response) => {
+    rejectRequest = async (_req: Request, _res: Response) => {
         const requestId = Number(_req.params.requestId);
         try {
-            const result = this.service.rejectFriendRequest(requestId);
+            const result = await this.service.rejectFriendRequest(requestId);
             _res.json(result);
         } catch (err: any) {
             _res.status(400).json({ error: err.message });
@@ -44,23 +44,23 @@ export class UserRelationController {
     }
 
     // Ver amigos
-    getFriends = (_req: Request, _res: Response) => {
+    getFriends = async (_req: Request, _res: Response) => {
         const userId = Number(_req.params.id);
-        const friends = this.service.getFriends(userId);
+        const friends = await this.service.getFriends(userId);
         _res.json(friends);
     }
 
     // Solicitudes recibidas
-    getReceivedRequests = (_req: Request, _res: Response) => {
+    getReceivedRequests = async (_req: Request, _res: Response) => {
         const userId = Number(_req.params.id);
-        const requests = this.service.getReceivedRequests(userId);
+        const requests = await this.service.getReceivedRequests(userId);
         _res.json(requests);
     }
 
     // Solicitudes enviadas
-    getSentRequests = (_req: Request, _res: Response) => {
+    getSentRequests = async (_req: Request, _res: Response) => {
         const userId = Number(_req.params.id);
-        const requests = this.service.getSentRequests(userId);
+        const requests = await this.service.getSentRequests(userId);
         _res.json(requests);
     }
 
@@ -68,7 +68,7 @@ export class UserRelationController {
     updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const idParam = req.params.id;
-            const { name, profilePhoto } = req.body; // body puede tener name y/o profilePhoto
+            const { name, profilePhoto } = req.body;
 
             if (!idParam) {
                 throw new ValidationError('ID parameter is required');
@@ -79,13 +79,13 @@ export class UserRelationController {
                 throw new ValidationError('Invalid ID format');
             }
 
-            let user = this.userService.getUserById(id);
+            let user = await this.userService.getUserById(id);
 
             if (name !== undefined && name !== '') {
-                user = this.userService.updateUserN(id, name);
+                user = await this.userService.updateUserName(id, name);
             }
             if (profilePhoto !== undefined) {
-                user = this.userService.updateProfilePhoto(id, profilePhoto);
+                user = await this.userService.updateProfilePhoto(id, profilePhoto);
             }
 
             res.status(200).json({ status: 'success', data: user });
@@ -108,8 +108,8 @@ export class UserRelationController {
                 throw new ValidationError('Invalid ID format');
             }
 
-            this.service.removeAllRelationsForUser(id); // primero relaciones
-            const result = this.userService.deleteUser(id); // luego usuario
+            await this.service.removeAllRelationsForUser(id); // primero relaciones
+            const result = await this.userService.deleteUser(id); // luego usuario
 
             res.status(200).json({
                 status: 'success',
