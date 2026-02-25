@@ -1,181 +1,121 @@
+// src/services/user-service.ts
+// Refactored to use UserRepository for all data access (async/await)
+
 import type { User, CreateUserDTO } from '../models/user.js';
 import { ValidationError, NotFoundError } from '../utils/custom-errors.js';
+import { UserRepository } from '../repositories/user-repository.js';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export class UserService {
-    private passwordMinLength: number = 8;
-    private users: User[] = [];
+    private passwordMinLength = 8;
+    private repo: UserRepository;
 
-    registerUser(data: CreateUserDTO): User {
-        if (!data.password) {
-            throw new ValidationError("Password is required");
-        }
+    constructor(repo?: UserRepository) {
+        this.repo = repo ?? new UserRepository();
+    }
 
-        if (data.password.length < this.passwordMinLength) {
+    async registerUser(data: CreateUserDTO): Promise<User> {
+        if (!data.password) throw new ValidationError('Password is required');
+        if (data.password.length < this.passwordMinLength)
             throw new ValidationError(`Password must be at least ${this.passwordMinLength} characters`);
-        }
+        if (!data.email) throw new ValidationError('Email is required');
+        if (!EMAIL_REGEX.test(data.email)) throw new ValidationError('Invalid email format');
 
-        if (!data.email) {
-            throw new ValidationError("Email is required");
-        }
+        const existing = await this.repo.findByEmail(data.email);
+        if (existing) throw new ValidationError('Email already exists');
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(data.email)) {
-            throw new ValidationError("Invalid email format");
-        }
-
-        const emailExists = this.users.some(user => user.email === data.email);
-        if (emailExists) {
-            throw new ValidationError("Email already exists");
-        }
-
-        const newUser: User = {
-            id: this.users.length + 1,
-            ...data,
-            friends: [],
-            createdAt: new Date()
-        };
-
-        this.users.push(newUser);
-        console.log("User saved to DB:", newUser);
+        const newUser = await this.repo.create(data);
+        console.log('User saved to DB:', newUser);
         return newUser;
     }
 
-    getAllUsers(): User[] {
-        return this.users;
+    async getAllUsers(): Promise<User[]> {
+        return this.repo.findAll();
     }
 
-    getUserbN(name: string): User {
-        const user = this.users.find(u => u.name.toLowerCase() === name.toLowerCase());
-        
-        if (!user) {
-            throw new NotFoundError(`User with name '${name}' not found`);
-        }
-        
+    async getUserByName(name: string): Promise<User> {
+        const user = await this.repo.findByName(name);
+        if (!user) throw new NotFoundError(`User with name '${name}' not found`);
         return user;
     }
 
-    getUserById(id: number): User {
-        const user = this.users.find(u => u.id === id);
-        
-        if (!user) {
-            throw new NotFoundError(`User with ID ${id} not found`);
-        }
-        
+    async getUserById(id: number): Promise<User> {
+        const user = await this.repo.findById(id);
+        if (!user) throw new NotFoundError(`User with ID ${id} not found`);
         return user;
     }
 
-    updateUserN(id: number, newName: string): User {
-        const user = this.getUserById(id);
-        
-        if (!newName || newName.trim() === '') {
-            throw new ValidationError("Name cannot be empty");
-        }
-        
-        user.name = newName;
-        return user;
+    async updateUserName(id: number, newName: string): Promise<User> {
+        await this.getUserById(id); // throws if not found
+        if (!newName || newName.trim() === '') throw new ValidationError('Name cannot be empty');
+
+        const updated = await this.repo.updateName(id, newName);
+        if (!updated) throw new NotFoundError(`User with ID ${id} not found`);
+        return updated;
     }
 
-    updateUserEmail(id: number, newEmail: string): User {
-        const user = this.getUserById(id);
-        
-        if (!newEmail) {
-            throw new ValidationError("Email is required");
-        }
+    async updateUserEmail(id: number, newEmail: string): Promise<User> {
+        await this.getUserById(id);
+        if (!newEmail) throw new ValidationError('Email is required');
+        if (!EMAIL_REGEX.test(newEmail)) throw new ValidationError('Invalid email format');
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(newEmail)) {
-            throw new ValidationError("Invalid email format");
-        }
+        const conflict = await this.repo.findByEmail(newEmail);
+        if (conflict && conflict.id !== id) throw new ValidationError('Email already exists');
 
-        const emailExists = this.users.some(u => u.email === newEmail && u.id !== id);
-        if (emailExists) {
-            throw new ValidationError("Email already exists");
-        }
-        
-        user.email = newEmail;
-        return user;
+        const updated = await this.repo.updateEmail(id, newEmail);
+        if (!updated) throw new NotFoundError(`User with ID ${id} not found`);
+        return updated;
     }
 
-    updateUserP(id: number, newPassword: string): User {
-        const user = this.getUserById(id);
-        
-        if (!newPassword) {
-            throw new ValidationError("Password is required");
-        }
-
-        if (newPassword.length < this.passwordMinLength) {
+    async updateUserPassword(id: number, newPassword: string): Promise<User> {
+        await this.getUserById(id);
+        if (!newPassword) throw new ValidationError('Password is required');
+        if (newPassword.length < this.passwordMinLength)
             throw new ValidationError(`Password must be at least ${this.passwordMinLength} characters`);
-        }
-        
-        user.password = newPassword;
-        return user;
+
+        const updated = await this.repo.updatePassword(id, newPassword);
+        if (!updated) throw new NotFoundError(`User with ID ${id} not found`);
+        return updated;
     }
 
-    // Actualizar foto de perfil
-    updateProfilePhoto(id: number, profilePhoto: string): User {
-        const user = this.getUserById(id);
-        user.profilePhoto = profilePhoto;
-        return user;
+    async updateProfilePhoto(id: number, profilePhoto: string): Promise<User> {
+        await this.getUserById(id);
+        const updated = await this.repo.updateProfilePhoto(id, profilePhoto);
+        if (!updated) throw new NotFoundError(`User with ID ${id} not found`);
+        return updated;
     }
 
-    deleteUser(id: number): { message: string; deletedUser: User } {
-        const userIndex = this.users.findIndex(u => u.id === id);
-
-        if (userIndex === -1) {
-            throw new NotFoundError(`User with ID ${id} not found`);
-        }
-
-        // Quitar este usuario de la lista de amigos del resto
-        for (const u of this.users) {
-            const idx = u.friends.indexOf(id);
-            if (idx !== -1) u.friends.splice(idx, 1);
-        }
-
-        const deletedUsers = this.users.splice(userIndex, 1);
-        const deletedUser = deletedUsers[0];
-
-        if (!deletedUser) {
-            throw new NotFoundError(`User with ID ${id} not found`);
-        }
-
-        return {
-            message: "User deleted successfully",
-            deletedUser
-        };
+    async deleteUser(id: number): Promise<{ message: string; deletedUser: User }> {
+        const deletedUser = await this.repo.delete(id);
+        if (!deletedUser) throw new NotFoundError(`User with ID ${id} not found`);
+        return { message: 'User deleted successfully', deletedUser };
     }
 
-    getFriends(id: number): User[] {
-        const user = this.getUserById(id);
-        const friends = this.users.filter(u => user.friends.includes(u.id));
-        return friends;
+    async getFriends(id: number): Promise<User[]> {
+        await this.getUserById(id);
+        return this.repo.getFriends(id);
     }
 
-    addFriend(userId: number, friendId: number): User {
-        const user = this.getUserById(userId);
-        this.getUserById(friendId); // Verificar que el amigo existe
-        
-        if (userId === friendId) {
-            throw new ValidationError("You cannot add yourself as a friend");
-        }
-        
-        if (user.friends.includes(friendId)) {
-            throw new ValidationError("User is already your friend");
-        }
-        
-        user.friends.push(friendId);
-        return user;
+    async addFriend(userId: number, friendId: number): Promise<User> {
+        const user = await this.getUserById(userId);
+        await this.getUserById(friendId); // verify friend exists
+
+        if (userId === friendId) throw new ValidationError('You cannot add yourself as a friend');
+        if (user.friends.includes(friendId)) throw new ValidationError('User is already your friend');
+
+        const updated = await this.repo.addFriend(userId, friendId);
+        if (!updated) throw new NotFoundError(`User with ID ${userId} not found`);
+        return updated;
     }
 
-    removeFriend(userId: number, friendId: number): User {
-        const user = this.getUserById(userId);
-        
-        const friendIndex = user.friends.indexOf(friendId);
-        
-        if (friendIndex === -1) {
-            throw new NotFoundError("Friend not found in your friends list");
-        }
-        
-        user.friends.splice(friendIndex, 1);
-        return user;
+    async removeFriend(userId: number, friendId: number): Promise<User> {
+        const user = await this.getUserById(userId);
+        if (!user.friends.includes(friendId))
+            throw new NotFoundError('Friend not found in your friends list');
+
+        const updated = await this.repo.removeFriend(userId, friendId);
+        if (!updated) throw new NotFoundError(`User with ID ${userId} not found`);
+        return updated;
     }
 }

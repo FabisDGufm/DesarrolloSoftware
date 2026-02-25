@@ -1,86 +1,70 @@
+// src/services/user-relation-service.ts
+// Refactored to use UserRelationRepository for all data access (async/await)
+
 import type { FriendRelation } from '../models/user-relation.js';
+import { UserRelationRepository } from '../repositories/user-relation-repository.js';
 
 export class UserRelationService {
-    private relations: FriendRelation[] = [];
-    private lastId: number = 0;
+    private repo: UserRelationRepository;
+
+    constructor(repo?: UserRelationRepository) {
+        this.repo = repo ?? new UserRelationRepository();
+    }
 
     // Crear solicitud de amistad
-    sendFriendRequest(requesterId: number, receiverId: number): FriendRelation {
+    async sendFriendRequest(requesterId: number, receiverId: number): Promise<FriendRelation> {
         if (requesterId === receiverId) {
-            throw new Error("No puedes enviarte solicitud a ti mismo.");
+            throw new Error('No puedes enviarte solicitud a ti mismo.');
         }
 
-        // Evitar duplicados pendientes o aceptados
-        const existing = this.relations.find(
-            r =>
-                ((r.requesterId === requesterId && r.receiverId === receiverId) ||
-                 (r.requesterId === receiverId && r.receiverId === requesterId)) &&
-                (r.status === "pending" || r.status === "accepted") // <- control agregado
-        );
-
-        if (existing) {
-            throw new Error("Ya existe una relación o solicitud entre estos usuarios.");
+        const existing = await this.repo.findExistingRelation(requesterId, receiverId);
+        if (existing && (existing.status === 'pending' || existing.status === 'accepted')) {
+            throw new Error('Ya existe una relación o solicitud entre estos usuarios.');
         }
 
-        const newRelation: FriendRelation = {
-            id: ++this.lastId,
-            requesterId,
-            receiverId,
-            status: "pending",
-            createdAt: new Date()
-        };
-
-        this.relations.push(newRelation);
-        return newRelation;
+        return this.repo.create(requesterId, receiverId);
     }
 
     // Aceptar solicitud
-    acceptFriendRequest(requestId: number): FriendRelation {
-        const relation = this.relations.find(r => r.id === requestId);
-        if (!relation) {
-            throw new Error("Solicitud no encontrada.");
-        }
-        if (relation.status === "accepted") {
-            throw new Error("La solicitud ya fue aceptada.");
-        }
-        relation.status = "accepted";
-        return relation;
+    async acceptFriendRequest(requestId: number): Promise<FriendRelation> {
+        const relation = await this.repo.findById(requestId);
+        if (!relation) throw new Error('Solicitud no encontrada.');
+        if (relation.status === 'accepted') throw new Error('La solicitud ya fue aceptada.');
+
+        const updated = await this.repo.updateStatus(requestId, 'accepted');
+        if (!updated) throw new Error('Solicitud no encontrada.');
+        return updated;
     }
 
     // Rechazar solicitud
-    rejectFriendRequest(requestId: number): FriendRelation {
-        const relation = this.relations.find(r => r.id === requestId);
-        if (!relation) {
-            throw new Error("Solicitud no encontrada.");
-        }
-        if (relation.status !== "pending") {
-            throw new Error("La solicitud ya fue procesada.");
-        }
-        relation.status = "rejected";
-        return relation;
+    async rejectFriendRequest(requestId: number): Promise<FriendRelation> {
+        const relation = await this.repo.findById(requestId);
+        if (!relation) throw new Error('Solicitud no encontrada.');
+        if (relation.status !== 'pending') throw new Error('La solicitud ya fue procesada.');
+
+        const updated = await this.repo.updateStatus(requestId, 'rejected');
+        if (!updated) throw new Error('Solicitud no encontrada.');
+        return updated;
     }
 
     // Ver amigos (aceptados)
-    getFriends(userId: number): number[] {
-        return this.relations
-            .filter(r => r.status === "accepted" && (r.requesterId === userId || r.receiverId === userId))
-            .map(r => (r.requesterId === userId ? r.receiverId : r.requesterId));
+    async getFriends(userId: number): Promise<number[]> {
+        const relations = await this.repo.findAcceptedByUser(userId);
+        return relations.map(r => (r.requesterId === userId ? r.receiverId : r.requesterId));
     }
 
     // Ver solicitudes recibidas (pendientes)
-    getReceivedRequests(userId: number): FriendRelation[] {
-        return this.relations.filter(r => r.receiverId === userId && r.status === "pending");
+    async getReceivedRequests(userId: number): Promise<FriendRelation[]> {
+        return this.repo.findByReceiver(userId, 'pending');
     }
 
     // Ver solicitudes enviadas (pendientes)
-    getSentRequests(userId: number): FriendRelation[] {
-        return this.relations.filter(r => r.requesterId === userId && r.status === "pending");
+    async getSentRequests(userId: number): Promise<FriendRelation[]> {
+        return this.repo.findByRequester(userId, 'pending');
     }
 
     // Borrar todas las relaciones de un usuario (al dar de baja la cuenta)
-    removeAllRelationsForUser(userId: number): void {
-        this.relations = this.relations.filter(
-            r => r.requesterId !== userId && r.receiverId !== userId
-        );
+    async removeAllRelationsForUser(userId: number): Promise<void> {
+        await this.repo.deleteAllForUser(userId);
     }
 }
