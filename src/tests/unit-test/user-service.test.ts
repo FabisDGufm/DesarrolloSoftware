@@ -62,4 +62,50 @@ describe('UserService', () => {
                 .rejects.toThrow('Email is required');
         });
     });
+
+    // ----------- READ -----------
+    it('should return all users', async () => {
+        const users = await userService.getAllUsers();
+        expect(Array.isArray(users)).toBe(true);
+    });
+
+    it('should get user by id', async () => {
+        const user = await userService.registerUser({
+            name: 'Johnny',
+            email: 'Johnny@test.com',
+            password: 'password123',
+            role: 1
+        });
+
+        const found = await userService.getUserById(user.id);
+        expect(found.id).toBe(user.id);
+    });
+
+    // ----------- UPDATE -----------
+    it('should update user name', async () => {
+        const user = await userService.registerUser({
+            name: 'Bob',
+            email: 'bob@test.com',
+            password: 'password123',
+            role: 1
+        });
+
+        const updated = await userService.updateUserName(user.id, 'Bobby');
+        expect(updated.name).toBe('Bobby');
+    });
+
+    // ----------- DELETE -----------
+    it('should delete a user', async () => {
+        const user = await userService.registerUser({
+            name: 'Pepe',
+            email: 'Pepito@test.com',
+            password: 'password123',
+            role: 1
+        });
+
+        const result = await userService.deleteUser(user.id);
+
+        expect(result.message).toBe('User deleted successfully');
+        expect(result.deletedUser.id).toBe(user.id);
+    });
 });
