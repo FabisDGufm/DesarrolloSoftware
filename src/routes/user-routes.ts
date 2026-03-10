@@ -1,14 +1,28 @@
 import { Router } from 'express';
-import { UserService } from '../services/user-service.js';
 import { UserController } from '../controllers/user-controller.js';
+import { userService } from '../services/instances.js';
 
 const router = Router();
 
-const userService = new UserService();
 const userController = new UserController(userService);
 
-// GET /users → para que pasen los integration tests
-router.get('/', (_req, res) => res.status(200).json({ message: 'ok' }));
-router.post('/register', userController.register);
+// Create user
+router.post('/register', userController.registerUser);
+
+// Read all
+router.get('/', userController.getUsers);
+router.get('/:name', userController.getUserByName);
+
+// Update
+router.put('/:id/name', userController.updateUserName);
+router.put('/:id/email', userController.updateUserEmail);
+router.put('/:id/password', userController.updateUserPassword);
+router.put('/:id/profile-photo', userController.updateProfilePhoto);
+
+// Delete
+router.delete('/:id', userController.deleteUser);
+
+// Get friends
+router.get('/:id/friends', userController.getFriends);
 
 export default router;

@@ -1,24 +1,44 @@
 import express from 'express';
 import userRoutes from './routes/user-routes.js';
+import userRelationRoutes from './routes/user-relation-routes.js';
+import feedRoutes from './routes/feed-routes.js';
+import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
+import { corsMiddleware } from './middlewares/cors.js';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// Middleware para leer JSON del body
+app.use(corsMiddleware);
 app.use(express.json());
-
-// Rutas de usuarios
-app.use('/users', userRoutes);
 
 app.get('/', (_req, res) => {
     res.send('Hello World!!!!');
 });
 
-// Solo iniciar el servidor si no estamos en tests (para que Jest pueda terminar)
-if (typeof process.env.JEST_WORKER_ID === 'undefined') {
-  app.listen(port, () => {
+app.get('/', (_req, res) => {
+    res.send('Hello World!!!!');
+});
+
+app.get('/health', (_req, res) => {
+    res.status(200).json({ 
+        status: 'ok',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.use('/api/users', userRoutes);
+app.use('/api/user-relations', userRelationRoutes);
+app.use('/api/feed', feedRoutes);
+
+app.use('/users', userRoutes);
+app.use('/user-relations', userRelationRoutes);
+app.use('/feed', feedRoutes);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+app.listen(port, () => {
     console.log(`Server running on port ${port}`);
-  });
-}
+});
 
 export default app;
