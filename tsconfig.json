@@ -1,19 +1,25 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     /* ===============================
        File Layout (BACKEND)
        =============================== */
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
 
     /* ===============================
        Environment Settings
        =============================== */
-    "module": "nodenext",
-    "target": "esnext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2023",
     "lib": ["esnext"],
-    "types": ["node", "jest"],  // ← Agregar "jest" aquí
+    "types": ["node", "jest"],
+
+    /* ===============================
+       Prisma / Interop
+       =============================== */
+    "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
 
     /* ===============================
        Output
@@ -43,9 +49,6 @@
     "skipLibCheck": true
   },
 
-  /* ===============================
-     IMPORTANT: limit TS to backend
-     =============================== */
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/database"],
   "exclude": ["frontend", "node_modules"]
 }
