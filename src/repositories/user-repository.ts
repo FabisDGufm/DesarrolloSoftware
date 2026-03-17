@@ -1,133 +1,142 @@
 // src/repositories/user-repository.ts
-// Simulated database repository for User entities
-
-import type { User, CreateUserDTO } from '../models/user.js';
-import { ValidationError, NotFoundError } from '../utils/custom-errors.js';
-
-// Simulated in-memory "database"
-const db: { users: User[] } = { users: [] };
-let autoIncrement = 0;
-
-// Simulates network/disk latency of a real DB call
-const simulateDelay = (ms = 50) => new Promise(resolve => setTimeout(resolve, ms));
+import { prisma } from "../database/prisma.js";
+import type { User, CreateUserDTO, UpdateUserDTO } from "../models/user.js";
+import bcrypt from "bcryptjs"; // 🔑 para hashing
 
 export class UserRepository {
 
-    async findAll(): Promise<User[]> {
-        await simulateDelay();
-        console.log('[DB] SELECT * FROM users');
-        return [...db.users];
+  async findAll(): Promise<User[]> {
+    const users = await prisma.user.findMany({ include: { auth: true } });
+    return users.map(u => ({
+      id: u.id,
+      name: u.name ?? "",
+      email: u.email,
+      password: u.auth?.password || "", // sigue usando tu campo password
+      friends: [],
+      role: 0,
+      profilePhoto: "",
+      createdAt: new Date()
+    }));
+  }
+
+  async findById(id: number): Promise<User | null> {
+    const u = await prisma.user.findUnique({ where: { id }, include: { auth: true } });
+    if (!u) return null;
+    return {
+      id: u.id,
+      name: u.name ?? "",
+      email: u.email,
+      password: u.auth?.password || "",
+      friends: [],
+      role: 0,
+      profilePhoto: "",
+      createdAt: new Date()
+    };
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const u = await prisma.user.findUnique({ where: { email }, include: { auth: true } });
+    if (!u) return null;
+    return {
+      id: u.id,
+      name: u.name ?? "",
+      email: u.email,
+      password: u.auth?.password || "",
+      friends: [],
+      role: 0,
+      profilePhoto: "",
+      createdAt: new Date()
+    };
+  }
+
+  async create(data: CreateUserDTO): Promise<User> {
+    // 🔑 Hash de la contraseña antes de guardar
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        auth: { create: { password: hashedPassword } } // mantiene tu campo auth.password
+      },
+      include: { auth: true }
+    });
+
+    return {
+      id: user.id,
+      name: user.name ?? "",
+      email: user.email,
+      password: user.auth?.password || "",
+      friends: [],
+      role: 0,
+      profilePhoto: "",
+      createdAt: new Date()
+    };
+  }
+
+  async update(id: number, data: UpdateUserDTO): Promise<User | null> {
+    try {
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.email !== undefined) updateData.email = data.email;
+
+      const user = await prisma.user.update({
+        where: { id },
+        data: updateData,
+        include: { auth: true }
+      });
+
+      return {
+        id: user.id,
+        name: user.name ?? "",
+        email: user.email,
+        password: user.auth?.password || "",
+        friends: [],
+        role: 0,
+        profilePhoto: "",
+        createdAt: new Date()
+      };
+    } catch {
+      return null;
     }
+  }
 
-    async findById(id: number): Promise<User | null> {
-        await simulateDelay();
-        console.log(`[DB] SELECT * FROM users WHERE id = ${id}`);
-        return db.users.find(u => u.id === id) ?? null;
+  async updatePassword(id: number, password: string): Promise<User | null> {
+    try {
+      // 🔑 Hash antes de actualizar
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await prisma.authentication.update({
+        where: { userId: id },
+        data: { password: hashedPassword } // mantiene tu campo auth.password
+      });
+
+      return this.findById(id);
+    } catch {
+      return null;
     }
+  }
 
-    async findByName(name: string): Promise<User | null> {
-        await simulateDelay();
-        console.log(`[DB] SELECT * FROM users WHERE LOWER(name) = '${name.toLowerCase()}'`);
-        return db.users.find(u => u.name.toLowerCase() === name.toLowerCase()) ?? null;
+  async delete(id: number): Promise<User | null> {
+    try {
+      const user = await prisma.user.delete({ where: { id }, include: { auth: true } });
+      return {
+        id: user.id,
+        name: user.name ?? "",
+        email: user.email,
+        password: user.auth?.password || "",
+        friends: [],
+        role: 0,
+        profilePhoto: "",
+        createdAt: new Date()
+      };
+    } catch {
+      return null;
     }
+  }
 
-    async findByEmail(email: string): Promise<User | null> {
-        await simulateDelay();
-        console.log(`[DB] SELECT * FROM users WHERE email = '${email}'`);
-        return db.users.find(u => u.email === email) ?? null;
-    }
-
-    async create(data: CreateUserDTO): Promise<User> {
-        await simulateDelay();
-        const newUser: User = {
-            id: ++autoIncrement,
-            ...data,
-            friends: [],
-            createdAt: new Date()
-        };
-        db.users.push(newUser);
-        console.log(`[DB] INSERT INTO users VALUES (${newUser.id}, '${newUser.email}', ...)`);
-        return { ...newUser };
-    }
-
-    async updateName(id: number, name: string): Promise<User | null> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === id);
-        if (!user) return null;
-        user.name = name;
-        console.log(`[DB] UPDATE users SET name = '${name}' WHERE id = ${id}`);
-        return { ...user };
-    }
-
-    async updateEmail(id: number, email: string): Promise<User | null> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === id);
-        if (!user) return null;
-        user.email = email;
-        console.log(`[DB] UPDATE users SET email = '${email}' WHERE id = ${id}`);
-        return { ...user };
-    }
-
-    async updatePassword(id: number, password: string): Promise<User | null> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === id);
-        if (!user) return null;
-        user.password = password;
-        console.log(`[DB] UPDATE users SET password = '[HASHED]' WHERE id = ${id}`);
-        return { ...user };
-    }
-
-    async updateProfilePhoto(id: number, profilePhoto: string): Promise<User | null> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === id);
-        if (!user) return null;
-        user.profilePhoto = profilePhoto;
-        console.log(`[DB] UPDATE users SET profile_photo = '${profilePhoto}' WHERE id = ${id}`);
-        return { ...user };
-    }
-
-    async addFriend(userId: number, friendId: number): Promise<User | null> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === userId);
-        if (!user) return null;
-        user.friends.push(friendId);
-        console.log(`[DB] INSERT INTO user_friends (user_id, friend_id) VALUES (${userId}, ${friendId})`);
-        return { ...user };
-    }
-
-    async removeFriend(userId: number, friendId: number): Promise<User | null> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === userId);
-        if (!user) return null;
-        const idx = user.friends.indexOf(friendId);
-        if (idx === -1) return null;
-        user.friends.splice(idx, 1);
-        console.log(`[DB] DELETE FROM user_friends WHERE user_id = ${userId} AND friend_id = ${friendId}`);
-        return { ...user };
-    }
-
-    async getFriends(userId: number): Promise<User[]> {
-        await simulateDelay();
-        const user = db.users.find(u => u.id === userId);
-        if (!user) return [];
-        const friends = db.users.filter(u => user.friends.includes(u.id));
-        console.log(`[DB] SELECT u.* FROM users u JOIN user_friends f ON u.id = f.friend_id WHERE f.user_id = ${userId}`);
-        return friends.map(u => ({ ...u }));
-    }
-
-    async delete(id: number): Promise<User | null> {
-        await simulateDelay();
-        const idx = db.users.findIndex(u => u.id === id);
-        if (idx === -1) return null;
-
-        // Remove from all friends lists
-        for (const u of db.users) {
-            const friendIdx = u.friends.indexOf(id);
-            if (friendIdx !== -1) u.friends.splice(friendIdx, 1);
-        }
-
-        const [deletedUser] = db.users.splice(idx, 1);
-        console.log(`[DB] DELETE FROM users WHERE id = ${id}`);
-        return deletedUser ? { ...deletedUser } : null;
-    }
+  // 🔑 método extra para verificar contraseñas en login
+  async verifyPassword(plain: string, hashed: string): Promise<boolean> {
+    return bcrypt.compare(plain, hashed);
+  }
 }
