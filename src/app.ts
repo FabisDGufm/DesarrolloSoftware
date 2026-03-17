@@ -4,12 +4,16 @@ import userRelationRoutes from './routes/user-relation-routes.js';
 import feedRoutes from './routes/feed-routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
 import { corsMiddleware } from './middlewares/cors.js';
+import profileRoutes from './routes/user-profile-routes.js';
+
+
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(corsMiddleware);
 app.use(express.json());
+app.use('/profile', profileRoutes);
 
 app.get('/', (_req, res) => {
     res.send('Hello World!!!!');
