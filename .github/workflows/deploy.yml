@@ -1,23 +1,27 @@
+name: Despliegue
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v6.3.0
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: 'npm'
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies and build
         run: |
           npm ci
+          npx prisma generate
           npm run build
 
       - name: Deploy to EC2
@@ -26,7 +30,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "dist/,node_modules/,package.json,prisma/,systemd/"
+          source: "dist/,node_modules/,package.json,package-lock.json,prisma/,prisma.config.ts,systemd/"
           target: /var/www/social-media
           overwrite: true
 
@@ -42,16 +46,16 @@ jobs:
             cd /var/www/social-media
             sudo cp systemd/social-media-api.service /etc/systemd/system/
             sudo systemctl daemon-reload
-            cat <<EOF > /var/www/social-media/.env
-            PORT=${{ secrets.PORT }}
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            DATABASE_USER=${{ secrets.DATABASE_USER }}
-            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            EOF
+            {
+              echo "PORT=${{ secrets.PORT }}"
+              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
+              echo "DATABASE_USER=${{ secrets.DATABASE_USER }}"
+              echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
+              echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}"
+              echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}"
+              echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}"
+              echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}"
+            } > /var/www/social-media/.env
             npx prisma migrate deploy
             sudo systemctl restart social-media-api
             systemctl is-active --quiet social-media-api && echo "Service Running" || exit 1
