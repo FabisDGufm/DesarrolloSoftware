@@ -1,114 +1,204 @@
 // src/repositories/user-relation-repository.ts
-// Simulated database repository for FriendRelation entities
+// Reemplaza la versión en memoria — ahora usa DynamoDB
 
-import type { FriendRelation, FriendRequestStatus } from '../models/user-relation.js';
+import {
+    PutCommand,
+    GetCommand,
+    QueryCommand,
+    UpdateCommand,
+    DeleteCommand,
+    ScanCommand,
+} from "@aws-sdk/lib-dynamodb";
+import { dynamo } from "../config/dynamodb.js";
+import type { FriendRelation, FriendRequestStatus } from "../models/user-relation.js";
 
-// Simulated in-memory "database"
-const db: { relations: FriendRelation[] } = { relations: [] };
-let autoIncrement = 0;
-
-const simulateDelay = (ms = 50) => new Promise(resolve => setTimeout(resolve, ms));
+const TABLE = "UserRelationships";
 
 export class UserRelationRepository {
 
-    async findAll(): Promise<FriendRelation[]> {
-        await simulateDelay();
-        console.log('[DB] SELECT * FROM friend_relations');
-        return [...db.relations];
-    }
-
-    async findById(id: number): Promise<FriendRelation | null> {
-        await simulateDelay();
-        console.log(`[DB] SELECT * FROM friend_relations WHERE id = ${id}`);
-        return db.relations.find(r => r.id === id) ?? null;
-    }
-
-    async findExistingRelation(userAId: number, userBId: number): Promise<FriendRelation | null> {
-        await simulateDelay();
-        console.log(
-            `[DB] SELECT * FROM friend_relations WHERE ` +
-            `(requester_id = ${userAId} AND receiver_id = ${userBId}) OR ` +
-            `(requester_id = ${userBId} AND receiver_id = ${userAId})`
-        );
-        return (
-            db.relations.find(
-                r =>
-                    (r.requesterId === userAId && r.receiverId === userBId) ||
-                    (r.requesterId === userBId && r.receiverId === userAId)
-            ) ?? null
-        );
-    }
-
-    async findByReceiver(receiverId: number, status?: FriendRequestStatus): Promise<FriendRelation[]> {
-        await simulateDelay();
-        console.log(
-            `[DB] SELECT * FROM friend_relations WHERE receiver_id = ${receiverId}` +
-            (status ? ` AND status = '${status}'` : '')
-        );
-        return db.relations.filter(
-            r => r.receiverId === receiverId && (status ? r.status === status : true)
-        );
-    }
-
-    async findByRequester(requesterId: number, status?: FriendRequestStatus): Promise<FriendRelation[]> {
-        await simulateDelay();
-        console.log(
-            `[DB] SELECT * FROM friend_relations WHERE requester_id = ${requesterId}` +
-            (status ? ` AND status = '${status}'` : '')
-        );
-        return db.relations.filter(
-            r => r.requesterId === requesterId && (status ? r.status === status : true)
-        );
-    }
-
-    async findAcceptedByUser(userId: number): Promise<FriendRelation[]> {
-        await simulateDelay();
-        console.log(
-            `[DB] SELECT * FROM friend_relations ` +
-            `WHERE status = 'accepted' AND (requester_id = ${userId} OR receiver_id = ${userId})`
-        );
-        return db.relations.filter(
-            r => r.status === 'accepted' && (r.requesterId === userId || r.receiverId === userId)
-        );
-    }
-
+    // Crear solicitud de amistad → status: "pending"
     async create(requesterId: number, receiverId: number): Promise<FriendRelation> {
-        await simulateDelay();
-        const newRelation: FriendRelation = {
-            id: ++autoIncrement,
-            requesterId,
-            receiverId,
-            status: 'pending',
-            createdAt: new Date()
-        };
-        db.relations.push(newRelation);
-        console.log(
-            `[DB] INSERT INTO friend_relations (requester_id, receiver_id, status) ` +
-            `VALUES (${requesterId}, ${receiverId}, 'pending')`
+        const id = Date.now();
+        const createdAt = new Date();
+
+        await dynamo.send(
+            new PutCommand({
+                TableName: TABLE,
+                Item: {
+                    PK: `USER#${requesterId}`,
+                    SK: `FRIEND#${receiverId}`,
+                    GSI1PK: `USER#${receiverId}`,
+                    GSI1SK: `REQUESTER#${requesterId}`,
+                    id,
+                    requesterId,
+                    receiverId,
+                    status: "pending",
+                    createdAt: createdAt.toISOString(),
+                },
+                ConditionExpression: "attribute_not_exists(PK)",
+            })
         );
-        return { ...newRelation };
+
+        return { id, requesterId, receiverId, status: "pending", createdAt };
     }
 
-    async updateStatus(id: number, status: FriendRequestStatus): Promise<FriendRelation | null> {
-        await simulateDelay();
-        const relation = db.relations.find(r => r.id === id);
+    // Buscar relación por su id numérico
+    // Nota: DynamoDB no tiene índice por id numérico por defecto,
+    // así que usamos el PK/SK que son suficientes para los casos de uso reales
+    async findById(requestId: number): Promise<FriendRelation | null> {
+        // Hacemos scan con filtro — solo para operaciones puntuales como accept/reject
+        const result = await dynamo.send(
+            new ScanCommand({
+                TableName: TABLE,
+                FilterExpression: "id = :id",
+                ExpressionAttributeValues: { ":id": requestId },
+                Limit: 1,
+            })
+        );
+
+        const item = result.Items?.[0];
+        if (!item) return null;
+
+        return this.mapItem(item);
+    }
+
+    // Buscar relación exacta entre dos usuarios
+    async findExistingRelation(
+        requesterId: number,
+        receiverId: number
+    ): Promise<FriendRelation | null> {
+        const result = await dynamo.send(
+            new GetCommand({
+                TableName: TABLE,
+                Key: {
+                    PK: `USER#${requesterId}`,
+                    SK: `FRIEND#${receiverId}`,
+                },
+            })
+        );
+
+        if (!result.Item) return null;
+        return this.mapItem(result.Item);
+    }
+
+    // Actualizar status de una relación
+    async updateStatus(
+        requestId: number,
+        status: FriendRequestStatus
+    ): Promise<FriendRelation | null> {
+        // Primero buscamos el item para obtener sus keys
+        const relation = await this.findById(requestId);
         if (!relation) return null;
-        relation.status = status;
-        console.log(`[DB] UPDATE friend_relations SET status = '${status}' WHERE id = ${id}`);
-        return { ...relation };
+
+        await dynamo.send(
+            new UpdateCommand({
+                TableName: TABLE,
+                Key: {
+                    PK: `USER#${relation.requesterId}`,
+                    SK: `FRIEND#${relation.receiverId}`,
+                },
+                UpdateExpression: "SET #s = :status",
+                ExpressionAttributeNames: { "#s": "status" },
+                ExpressionAttributeValues: { ":status": status },
+            })
+        );
+
+        return { ...relation, status };
     }
 
-    async deleteAllForUser(userId: number): Promise<number> {
-        await simulateDelay();
-        const before = db.relations.length;
-        db.relations = db.relations.filter(
-            r => r.requesterId !== userId && r.receiverId !== userId
+    // Solicitudes recibidas por un usuario (usa GSI InverseIndex)
+    async findByReceiver(
+        receiverId: number,
+        status?: FriendRequestStatus
+    ): Promise<FriendRelation[]> {
+        const result = await dynamo.send(
+            new QueryCommand({
+                TableName: TABLE,
+                IndexName: "InverseIndex",
+                KeyConditionExpression: "GSI1PK = :pk AND begins_with(GSI1SK, :prefix)",
+                FilterExpression: status ? "#s = :status" : undefined,
+                ExpressionAttributeValues: {
+                    ":pk": `USER#${receiverId}`,
+                    ":prefix": "REQUESTER#",
+                    ...(status ? { ":status": status } : {}),
+                },
+                ...(status ? { ExpressionAttributeNames: { "#s": "status" } } : {}),
+            })
         );
-        const deleted = before - db.relations.length;
-        console.log(
-            `[DB] DELETE FROM friend_relations WHERE requester_id = ${userId} OR receiver_id = ${userId} ` +
-            `-- ${deleted} rows affected`
+
+        return (result.Items ?? []).map(this.mapItem);
+    }
+
+    // Solicitudes enviadas por un usuario (tabla principal)
+    async findByRequester(
+        requesterId: number,
+        status?: FriendRequestStatus
+    ): Promise<FriendRelation[]> {
+        const result = await dynamo.send(
+            new QueryCommand({
+                TableName: TABLE,
+                KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+                FilterExpression: status ? "#s = :status" : undefined,
+                ExpressionAttributeValues: {
+                    ":pk": `USER#${requesterId}`,
+                    ":prefix": "FRIEND#",
+                    ...(status ? { ":status": status } : {}),
+                },
+                ...(status ? { ExpressionAttributeNames: { "#s": "status" } } : {}),
+            })
         );
-        return deleted;
+
+        return (result.Items ?? []).map(this.mapItem);
+    }
+
+    // Relaciones aceptadas de un usuario (como requester o receiver)
+    async findAcceptedByUser(userId: number): Promise<FriendRelation[]> {
+        const asSender = await this.findByRequester(userId, "accepted");
+        const asReceiver = await this.findByReceiver(userId, "accepted");
+        return [...asSender, ...asReceiver];
+    }
+
+    // Borrar todas las relaciones de un usuario (al eliminar cuenta)
+    async deleteAllForUser(userId: number): Promise<void> {
+        const sent = await this.findByRequester(userId);
+        const received = await this.findByReceiver(userId);
+
+        const deleteOps = [
+            ...sent.map((r) =>
+                dynamo.send(
+                    new DeleteCommand({
+                        TableName: TABLE,
+                        Key: {
+                            PK: `USER#${r.requesterId}`,
+                            SK: `FRIEND#${r.receiverId}`,
+                        },
+                    })
+                )
+            ),
+            ...received.map((r) =>
+                dynamo.send(
+                    new DeleteCommand({
+                        TableName: TABLE,
+                        Key: {
+                            PK: `USER#${r.requesterId}`,
+                            SK: `FRIEND#${r.receiverId}`,
+                        },
+                    })
+                )
+            ),
+        ];
+
+        await Promise.all(deleteOps);
+    }
+
+    // Helper para mapear item de DynamoDB al tipo FriendRelation
+    private mapItem(item: Record<string, any>): FriendRelation {
+        return {
+            id: item.id,
+            requesterId: item.requesterId,
+            receiverId: item.receiverId,
+            status: item.status as FriendRequestStatus,
+            createdAt: new Date(item.createdAt),
+        };
     }
 }
