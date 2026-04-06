@@ -1,5 +1,8 @@
 import { prisma } from "../database/prisma.js";
 import type { User } from "../models/user.js";
+import { UserRelationRepository } from "./user-relation-repository.js";
+
+const relationRepo = new UserRelationRepository();
 
 export class UserRepository {
 
@@ -9,7 +12,7 @@ export class UserRepository {
             name: u.name ?? "",
             email: u.email,
             password: u.auth?.password || "",
-            friends: [], // DynamoDB futuro
+            friends: [],
             role: 0,
             profilePhoto: "",
             createdAt: u.createdAt
@@ -104,8 +107,15 @@ export class UserRepository {
         }
     }
 
-    async getFriends(_id: number): Promise<User[]> {
-        // DynamoDB futuro
-        return [];
+    async getFriends(id: number): Promise<User[]> {
+        const relations = await relationRepo.findAcceptedByUser(id);
+        if (relations.length === 0) return [];
+
+        const friendIds = relations.map(r =>
+            r.requesterId === id ? r.receiverId : r.requesterId
+        );
+
+        const friends = await Promise.all(friendIds.map(fid => this.findById(fid)));
+        return friends.filter((u): u is User => u !== null);
     }
 }
