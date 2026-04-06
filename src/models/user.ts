@@ -12,3 +12,8 @@ export interface User {
 export type CreateUserDTO = Omit<User, 'id' | 'createdAt' | 'friends'>;
 
 export type UpdateUserDTO = Partial<CreateUserDTO>;
+
+export interface LoginDto {
+    email: string;
+    password: string;
+}

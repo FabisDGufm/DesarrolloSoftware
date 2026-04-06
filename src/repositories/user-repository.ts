@@ -1,142 +1,111 @@
-// src/repositories/user-repository.ts
 import { prisma } from "../database/prisma.js";
-import type { User, CreateUserDTO, UpdateUserDTO } from "../models/user.js";
-import bcrypt from "bcryptjs"; // 🔑 para hashing
+import type { User } from "../models/user.js";
 
 export class UserRepository {
 
-  async findAll(): Promise<User[]> {
-    const users = await prisma.user.findMany({ include: { auth: true } });
-    return users.map(u => ({
-      id: u.id,
-      name: u.name ?? "",
-      email: u.email,
-      password: u.auth?.password || "", // sigue usando tu campo password
-      friends: [],
-      role: 0,
-      profilePhoto: "",
-      createdAt: new Date()
-    }));
-  }
-
-  async findById(id: number): Promise<User | null> {
-    const u = await prisma.user.findUnique({ where: { id }, include: { auth: true } });
-    if (!u) return null;
-    return {
-      id: u.id,
-      name: u.name ?? "",
-      email: u.email,
-      password: u.auth?.password || "",
-      friends: [],
-      role: 0,
-      profilePhoto: "",
-      createdAt: new Date()
-    };
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    const u = await prisma.user.findUnique({ where: { email }, include: { auth: true } });
-    if (!u) return null;
-    return {
-      id: u.id,
-      name: u.name ?? "",
-      email: u.email,
-      password: u.auth?.password || "",
-      friends: [],
-      role: 0,
-      profilePhoto: "",
-      createdAt: new Date()
-    };
-  }
-
-  async create(data: CreateUserDTO): Promise<User> {
-    // 🔑 Hash de la contraseña antes de guardar
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        auth: { create: { password: hashedPassword } } // mantiene tu campo auth.password
-      },
-      include: { auth: true }
-    });
-
-    return {
-      id: user.id,
-      name: user.name ?? "",
-      email: user.email,
-      password: user.auth?.password || "",
-      friends: [],
-      role: 0,
-      profilePhoto: "",
-      createdAt: new Date()
-    };
-  }
-
-  async update(id: number, data: UpdateUserDTO): Promise<User | null> {
-    try {
-      const updateData: any = {};
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.email !== undefined) updateData.email = data.email;
-
-      const user = await prisma.user.update({
-        where: { id },
-        data: updateData,
-        include: { auth: true }
-      });
-
-      return {
-        id: user.id,
-        name: user.name ?? "",
-        email: user.email,
-        password: user.auth?.password || "",
-        friends: [],
-        role: 0,
-        profilePhoto: "",
-        createdAt: new Date()
-      };
-    } catch {
-      return null;
+    private mapUser(u: any): User {
+        return {
+            id: u.id,
+            name: u.name ?? "",
+            email: u.email,
+            password: u.auth?.password || "",
+            friends: [], // DynamoDB futuro
+            role: 0,
+            profilePhoto: "",
+            createdAt: u.createdAt
+        };
     }
-  }
 
-  async updatePassword(id: number, password: string): Promise<User | null> {
-    try {
-      // 🔑 Hash antes de actualizar
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      await prisma.authentication.update({
-        where: { userId: id },
-        data: { password: hashedPassword } // mantiene tu campo auth.password
-      });
-
-      return this.findById(id);
-    } catch {
-      return null;
+    async findAll(): Promise<User[]> {
+        const users = await prisma.user.findMany({ include: { auth: true } });
+        return users.map(u => this.mapUser(u));
     }
-  }
 
-  async delete(id: number): Promise<User | null> {
-    try {
-      const user = await prisma.user.delete({ where: { id }, include: { auth: true } });
-      return {
-        id: user.id,
-        name: user.name ?? "",
-        email: user.email,
-        password: user.auth?.password || "",
-        friends: [],
-        role: 0,
-        profilePhoto: "",
-        createdAt: new Date()
-      };
-    } catch {
-      return null;
+    async findById(id: number): Promise<User | null> {
+        const user = await prisma.user.findUnique({
+            where: { id },
+            include: { auth: true }
+        });
+        return user ? this.mapUser(user) : null;
     }
-  }
 
-  // 🔑 método extra para verificar contraseñas en login
-  async verifyPassword(plain: string, hashed: string): Promise<boolean> {
-    return bcrypt.compare(plain, hashed);
-  }
+    async findByEmail(email: string): Promise<User | null> {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: { auth: true }
+        });
+        return user ? this.mapUser(user) : null;
+    }
+
+    async findByName(name: string): Promise<User | null> {
+        const user = await prisma.user.findFirst({
+            where: { name },
+            include: { auth: true }
+        });
+        return user ? this.mapUser(user) : null;
+    }
+
+    async create(data: any): Promise<User> {
+        const user = await prisma.user.create({
+            data: {
+                name: data.name,
+                email: data.email,
+                auth: {
+                    create: { password: data.password }
+                }
+            },
+            include: { auth: true }
+        });
+
+        return this.mapUser(user);
+    }
+
+    async updateName(id: number, name: string): Promise<User> {
+        const user = await prisma.user.update({
+            where: { id },
+            data: { name },
+            include: { auth: true }
+        });
+        return this.mapUser(user);
+    }
+
+    async updateEmail(id: number, email: string): Promise<User> {
+        const user = await prisma.user.update({
+            where: { id },
+            data: { email },
+            include: { auth: true }
+        });
+        return this.mapUser(user);
+    }
+
+    async updatePassword(id: number, password: string): Promise<User | null> {
+        await prisma.authentication.update({
+            where: { userId: id },
+            data: { password }
+        });
+
+        return this.findById(id);
+    }
+
+    async updateProfilePhoto(_id: number, _profilePhoto: string): Promise<User | null> {
+        // DynamoDB futuro
+        return this.findById(_id);
+    }
+
+    async delete(id: number): Promise<User | null> {
+        try {
+            const user = await prisma.user.delete({
+                where: { id },
+                include: { auth: true }
+            });
+            return this.mapUser(user);
+        } catch {
+            return null;
+        }
+    }
+
+    async getFriends(_id: number): Promise<User[]> {
+        // DynamoDB futuro
+        return [];
+    }
 }
