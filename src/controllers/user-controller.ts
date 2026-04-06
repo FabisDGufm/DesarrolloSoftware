@@ -4,25 +4,26 @@ import type { CreateUserDTO } from '../models/user.js';
 import { ValidationError } from '../utils/custom-errors.js';
 
 export class UserController {
-    constructor(private readonly userService: UserService) {
-        console.log("UserController initialized");
-    }
+    constructor(private readonly userService: UserService) {}
 
     registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userData: CreateUserDTO = req.body;
-            const newUser = await this.userService.registerUser(userData);
+            const result = await this.userService.registerUser(userData);
 
-            const { password, ...userWithoutPassword } = newUser;
+            const { password, ...userWithoutPassword } = result.user;
 
             res.status(201).json({
                 status: 'success',
-                data: userWithoutPassword
+                data: {
+                    user: userWithoutPassword,
+                    authentication_token: result.authentication_token
+                }
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     getUsers = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
@@ -34,23 +35,18 @@ export class UserController {
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     getUserByName = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const nameParam = req.params.name;
 
-            if (!nameParam) {
+            if (!nameParam || typeof nameParam !== 'string') {
                 throw new ValidationError('Name parameter is required');
             }
 
-            const name = Array.isArray(nameParam) ? nameParam[0] : nameParam;
+            const user = await this.userService.getUserByName(nameParam);
 
-            if (!name) {
-                throw new ValidationError('Name parameter is required');
-            }
-
-            const user = await this.userService.getUserByName(name);
             res.status(200).json({
                 status: 'success',
                 data: user
@@ -58,135 +54,78 @@ export class UserController {
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     updateUserName = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const idParam = req.params.id;
+            const id = Number(req.params.id);
             const { name } = req.body;
 
-            if (!idParam) {
-                throw new ValidationError('ID parameter is required');
-            }
+            const user = await this.userService.updateUserName(id, name);
 
-            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
-
-            if (isNaN(id)) {
-                throw new ValidationError('Invalid ID format');
-            }
-
-            if (!name) {
-                throw new ValidationError('Name is required');
-            }
-
-            const result = await this.userService.updateUserName(id, name);
             res.status(200).json({
                 status: 'success',
-                data: result
+                data: user
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     updateUserEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const idParam = req.params.id;
+            const id = Number(req.params.id);
             const { email } = req.body;
 
-            if (!idParam) {
-                throw new ValidationError('ID parameter is required');
-            }
+            const user = await this.userService.updateUserEmail(id, email);
 
-            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
-
-            if (isNaN(id)) {
-                throw new ValidationError('Invalid ID format');
-            }
-
-            if (!email) {
-                throw new ValidationError('Email is required');
-            }
-
-            const result = await this.userService.updateUserEmail(id, email);
             res.status(200).json({
                 status: 'success',
-                data: result
+                data: user
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     updateUserPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const idParam = req.params.id;
+            const id = Number(req.params.id);
             const { password } = req.body;
 
-            if (!idParam) {
-                throw new ValidationError('ID parameter is required');
-            }
+            const user = await this.userService.updateUserPassword(id, password);
 
-            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
-
-            if (isNaN(id)) {
-                throw new ValidationError('Invalid ID format');
-            }
-
-            if (!password) {
-                throw new ValidationError('Password is required');
-            }
-
-            const result = await this.userService.updateUserPassword(id, password);
             res.status(200).json({
                 status: 'success',
-                data: result
+                data: user
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     updateProfilePhoto = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const idParam = req.params.id;
+            const id = Number(req.params.id);
             const { profilePhoto } = req.body;
 
-            if (!idParam) {
-                throw new ValidationError('ID parameter is required');
-            }
+            const user = await this.userService.updateProfilePhoto(id, profilePhoto);
 
-            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
-
-            if (isNaN(id)) {
-                throw new ValidationError('Invalid ID format');
-            }
-
-            const result = await this.userService.updateProfilePhoto(id, profilePhoto ?? '');
             res.status(200).json({
                 status: 'success',
-                data: result
+                data: user
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const idParam = req.params.id;
-
-            if (!idParam) {
-                throw new ValidationError('ID parameter is required');
-            }
-
-            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
-
-            if (isNaN(id)) {
-                throw new ValidationError('Invalid ID format');
-            }
+            const id = Number(req.params.id);
 
             const result = await this.userService.deleteUser(id);
+
             res.status(200).json({
                 status: 'success',
                 data: result
@@ -194,23 +133,14 @@ export class UserController {
         } catch (error) {
             next(error);
         }
-    }
+    };
 
     getFriends = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const idParam = req.params.id;
-
-            if (!idParam) {
-                throw new ValidationError('ID parameter is required');
-            }
-
-            const id = Number(Array.isArray(idParam) ? idParam[0] : idParam);
-
-            if (isNaN(id)) {
-                throw new ValidationError('Invalid ID format');
-            }
+            const id = Number(req.params.id);
 
             const friends = await this.userService.getFriends(id);
+
             res.status(200).json({
                 status: 'success',
                 data: friends
@@ -218,5 +148,5 @@ export class UserController {
         } catch (error) {
             next(error);
         }
-    }
+    };
 }
