@@ -1,0 +1,54 @@
+{
+  "name": "desarrollosoftware",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ProyectoSoftware",
+  "homepage": "https://github.com/FabisDGufm/DesarrolloSoftware#readme",
+  "bugs": {
+    "url": "https://github.com/FabisDGufm/DesarrolloSoftware/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FabisDGufm/DesarrolloSoftware.git"
+  },
+  "license": "ISC",
+  "author": "JD-P-M-F",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch src --exec tsx src/app.ts",
+    "build": "tsc",
+    "start": "node ./dist/app.js",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1025.0",
+    "@aws-sdk/lib-dynamodb": "^3.1025.0",
+    "@prisma/adapter-mariadb": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^25.4.0",
+    "@types/supertest": "^6.0.3",
+    "cross-env": "^7.0.3",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.11",
+    "prisma": "^7.4.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}
