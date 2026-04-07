@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    /* ===============================
+       File Layout (BACKEND)
+       =============================== */
+    "rootDir": ".",
+    "outDir": "./dist",
+
+    /* ===============================
+       Environment Settings
+       =============================== */
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2023",
+    "lib": ["esnext"],
+    "types": ["node", "jest"],
+
+    /* ===============================
+       Prisma / Interop
+       =============================== */
+    "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
+
+    /* ===============================
+       Output
+       =============================== */
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    /* ===============================
+       Type Checking
+       =============================== */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* ===============================
+       Module / Build Behavior
+       =============================== */
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+
+    /* ===============================
+       Misc
+       =============================== */
+    "skipLibCheck": true
+  },
+
+  "include": ["src/**/*", "src/database"],
+  "exclude": ["frontend", "node_modules"]
+}
