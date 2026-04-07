@@ -3,6 +3,8 @@ import userRoutes from './routes/user-routes.js';
 import userRelationRoutes from './routes/user-relation-routes.js';
 import feedRoutes from './routes/feed-routes.js';
 import exploreRoutes from './routes/explore-routes.js';
+import postInteractionRoutes from './routes/post-interaction-routes.js';
+import messageRoutes from './routes/message-routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
 import { corsMiddleware } from './middlewares/cors.js';
 import profileRoutes from './routes/user-profile-routes.js';
@@ -35,11 +37,15 @@ app.use('/api/users', userRoutes);
 app.use('/api/user-relations', userRelationRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/explore', exploreRoutes);
+app.use('/api/interactions', postInteractionRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.use('/users', userRoutes);
 app.use('/user-relations', userRelationRoutes);
 app.use('/feed', feedRoutes);
 app.use('/explore', exploreRoutes);
+app.use('/interactions', postInteractionRoutes);
+app.use('/messages', messageRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
