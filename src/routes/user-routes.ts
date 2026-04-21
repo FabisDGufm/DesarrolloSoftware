@@ -9,9 +9,14 @@ const userController = new UserController(userService);
 // Create user
 router.post('/register', userController.registerUser);
 
+// ✅ S3
+router.get('/upload-url', userController.getUploadUrl);
+
+
 // Read all
 router.get('/', userController.getUsers);
 router.get('/:name', userController.getUserByName);
+
 
 // Update
 router.put('/:id/name', userController.updateUserName);
