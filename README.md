@@ -36,4 +36,25 @@ El objetivo es permitir la libre expresión sin perder el respeto ni la segurida
 
 Visión
 
+<<<<<<< HEAD
 La idea principal de El Pasillo es unir a los estudiantes de Guatemala, crear vínculos entre universidades y construir una comunidad más fuerte, solidaria y conectada.
+=======
+La idea principal de El Pasillo es unir a los estudiantes de Guatemala, crear vínculos entre universidades y construir una comunidad más fuerte, solidaria y conectada.
+
+
+## Brainstorm
+
+# Ideas de título
+
+* El Pasillo
+* El matadero
+* ¿Quién lo dijo?
+* U-niverse
+
+# Ideas en general
+
+* Poder ver noticias de las Universidades
+* Sección de debate sin filtro
+* Noticias y anuncios relevantes
+
+>>>>>>> 2acfa19ed03617b7d5accf56545eb1954e2cda21

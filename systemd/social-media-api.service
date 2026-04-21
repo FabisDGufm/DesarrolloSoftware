@@ -1,0 +1,15 @@
+[Unit]
+Description=Social Media API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/social-media
+ExecStart=/usr/bin/node /var/www/social-media/dist/app.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/var/www/social-media/.env
+
+[Install]
+WantedBy=multi-user.target
