@@ -16,6 +16,9 @@ export class UserService {
         this.repo = repo ?? new UserRepository();
     }
 
+    // ========================
+    // AUTH
+    // ========================
     private generateToken(userId: number, email: string): string {
         const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
 
@@ -26,26 +29,40 @@ export class UserService {
         );
     }
 
-    // ✅ S3 CLIENT (FIX TS ERROR AQUÍ)
+    // ========================
+    // S3 CLIENT
+    // ========================
     private s3 = new S3Client({
-        region: process.env.AWS_REGION as string
+        region: process.env.AWS_REGION as string,
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
+        }
     });
 
-    // ✅ GENERAR PRESIGNED URL
-    async getUploadUrl(key: string): Promise<string> {
-        const bucket = process.env.AWS_BUCKET_NAME as string;
+    private bucket = process.env.AWS_BUCKET_NAME as string;
+
+    // ========================
+    // S3 - PRESIGNED URL
+    // ========================
+    async getUploadUrl(key: string): Promise<{ url: string; key: string }> {
+        if (!this.bucket) {
+            throw new Error("S3_BUCKET_NAME is not defined in .env");
+        }
 
         const command = new PutObjectCommand({
-            Bucket: bucket,
+            Bucket: this.bucket,
             Key: key,
-            ContentType: "image/jpeg"
+            ContentType: "image/jpeg",
         });
 
-        return await getSignedUrl(this.s3, command, { expiresIn: 300 });
+        const url = await getSignedUrl(this.s3, command, { expiresIn: 300 });
+
+        return { url, key };
     }
 
     // =========================
-    // USERS (NO TOCADO)
+    // USERS
     // =========================
 
     async registerUser(data: CreateUserDTO) {
@@ -108,7 +125,7 @@ export class UserService {
 
         const updated = await this.repo.updateName(id, newName);
         if (!updated)
-            throw new NotFoundError(`User with ID ${id} not found`);
+            throw new NotFoundError(`User not found`);
 
         return updated;
     }
@@ -128,7 +145,7 @@ export class UserService {
 
         const updated = await this.repo.updateEmail(id, newEmail);
         if (!updated)
-            throw new NotFoundError(`User with ID ${id} not found`);
+            throw new NotFoundError(`User not found`);
 
         return updated;
     }
@@ -140,34 +157,41 @@ export class UserService {
             throw new ValidationError('Password is required');
 
         if (newPassword.length < this.passwordMinLength)
-            throw new ValidationError(
-                `Password must be at least ${this.passwordMinLength} characters`
-            );
+            throw new ValidationError('Password too short');
 
         const hashed = await bcrypt.hash(newPassword, 10);
 
         const updated = await this.repo.updatePassword(id, hashed);
         if (!updated)
-            throw new NotFoundError(`User with ID ${id} not found`);
+            throw new NotFoundError(`User not found`);
 
         return updated;
     }
 
-    async updateProfilePhoto(id: number, profilePhoto: string): Promise<User> {
-        await this.getUserById(id);
+    // =========================
+    // PROFILE PHOTO (S3 FLOW)
+    // =========================
 
-        const updated = await this.repo.updateProfilePhoto(id, profilePhoto);
-        if (!updated)
-            throw new NotFoundError(`User with ID ${id} not found`);
+    async updateProfilePhoto(id: number, fileName: string): Promise<{ url: string; key: string }> {
+        const user = await this.getUserById(id);
 
-        return updated;
+        const key = `profiles/${Date.now()}-${fileName}`;
+
+        const { url } = await this.getUploadUrl(key);
+
+        await this.repo.updateProfilePhoto(id, url);
+
+        return { url, key };
     }
 
+    // =========================
+    // DELETE
+    // =========================
     async deleteUser(id: number) {
         const deletedUser = await this.repo.delete(id);
 
         if (!deletedUser)
-            throw new NotFoundError(`User with ID ${id} not found`);
+            throw new NotFoundError(`User not found`);
 
         return {
             message: 'User deleted successfully',
@@ -185,10 +209,10 @@ export class UserService {
         await this.getUserById(friendId);
 
         if (userId === friendId)
-            throw new ValidationError('You cannot add yourself as a friend');
+            throw new ValidationError('Cannot add yourself');
 
         if (user.friends.includes(friendId))
-            throw new ValidationError('User is already your friend');
+            throw new ValidationError('Already friends');
 
         return user;
     }
@@ -197,7 +221,7 @@ export class UserService {
         const user = await this.getUserById(userId);
 
         if (!user.friends.includes(friendId))
-            throw new NotFoundError('Friend not found in your friends list');
+            throw new NotFoundError('Friend not found');
 
         return user;
     }
