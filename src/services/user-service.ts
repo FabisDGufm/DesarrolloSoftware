@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import type { User, CreateUserDTO } from '../models/user.js';
 import { ValidationError, NotFoundError } from '../utils/custom-errors.js';
 import { UserRepository } from '../repositories/user-repository.js';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +25,28 @@ export class UserService {
             { expiresIn: "3d" }
         );
     }
+
+    // ✅ S3 CLIENT (FIX TS ERROR AQUÍ)
+    private s3 = new S3Client({
+        region: process.env.AWS_REGION as string
+    });
+
+    // ✅ GENERAR PRESIGNED URL
+    async getUploadUrl(key: string): Promise<string> {
+        const bucket = process.env.AWS_BUCKET_NAME as string;
+
+        const command = new PutObjectCommand({
+            Bucket: bucket,
+            Key: key,
+            ContentType: "image/jpeg"
+        });
+
+        return await getSignedUrl(this.s3, command, { expiresIn: 300 });
+    }
+
+    // =========================
+    // USERS (NO TOCADO)
+    // =========================
 
     async registerUser(data: CreateUserDTO) {
         if (!data.password)
@@ -153,7 +177,7 @@ export class UserService {
 
     async getFriends(id: number): Promise<User[]> {
         await this.getUserById(id);
-        return []; // DynamoDB futuro
+        return [];
     }
 
     async addFriend(userId: number, friendId: number): Promise<User> {
@@ -166,7 +190,7 @@ export class UserService {
         if (user.friends.includes(friendId))
             throw new ValidationError('User is already your friend');
 
-        return user; // DynamoDB futuro
+        return user;
     }
 
     async removeFriend(userId: number, friendId: number): Promise<User> {
@@ -175,6 +199,6 @@ export class UserService {
         if (!user.friends.includes(friendId))
             throw new NotFoundError('Friend not found in your friends list');
 
-        return user; // DynamoDB futuro
+        return user;
     }
 }
