@@ -69,4 +69,33 @@ describe('Explore Routes Integration Tests', () => {
             expect(Array.isArray(response.body.data)).toBe(true);
         });
     });
+
+    describe('GET /explore/meta', () => {
+        it('should return 200 and metadata', async () => {
+            const response = await request(app).get('/explore/meta').expect(200);
+
+            expect(response.body.status).toBe('success');
+            expect(response.body.data).toHaveProperty('types');
+            expect(Array.isArray(response.body.data.types)).toBe(true);
+        });
+    });
+
+    describe('GET /explore/browse/:type', () => {
+        it('should return 200 for valid type', async () => {
+            const response = await request(app)
+                .get('/explore/browse/post')
+                .expect(200);
+
+            expect(response.body.status).toBe('success');
+            expect(Array.isArray(response.body.data)).toBe(true);
+        });
+
+        it('should return 400 for invalid type', async () => {
+            const response = await request(app)
+                .get('/explore/browse/invalid')
+                .expect(400);
+
+            expect(response.body.status).toBe('error');
+        });
+    });
 });

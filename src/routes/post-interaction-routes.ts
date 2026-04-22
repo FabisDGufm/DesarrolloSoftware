@@ -52,4 +52,30 @@ router.get(
     controller.getShares
 );
 
+router.post(
+    '/posts/:authorId/:postId/save',
+    requireAuth,
+    controller.save
+);
+router.delete(
+    '/posts/:authorId/:postId/save',
+    requireAuth,
+    controller.unsave
+);
+router.get(
+    '/posts/:authorId/:postId/saves',
+    optionalAuth,
+    controller.getSaves
+);
+
+router.post(
+    '/posts/:authorId/:postId/repost',
+    requireAuth,
+    controller.repost
+);
+router.get(
+    '/posts/:authorId/:postId/reposts',
+    controller.getReposts
+);
+
 export default router;
