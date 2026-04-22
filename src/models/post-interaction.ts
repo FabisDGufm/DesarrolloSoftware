@@ -12,3 +12,9 @@ export interface PostLikeSummary {
     count: number;
     likedByMe: boolean;
 }
+
+export interface PostSaveSummary {
+    userIds: number[];
+    count: number;
+    savedByMe: boolean;
+}
