@@ -7,8 +7,10 @@ import { exploreService } from '../services/instances.js';
 const router = Router();
 const controller = new ExploreController(exploreService);
 
-// GET /explore?q=... o GET /explore/search?q=...
-router.get('/', controller.search);
+router.get('/meta', controller.meta);
+router.get('/browse/:type', controller.browseByType);
+// GET /explore?q=... (q vacío = destacados) | GET /explore/search?q=...
 router.get('/search', controller.search);
+router.get('/', controller.search);
 
 export default router;

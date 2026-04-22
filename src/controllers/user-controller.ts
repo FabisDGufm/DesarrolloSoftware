@@ -120,6 +120,28 @@ export class UserController {
         }
     };
 
+    // ✅ NUEVO ENDPOINT S3
+getUploadUrl = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { fileName } = req.query;
+
+        if (!fileName || typeof fileName !== "string") {
+            throw new ValidationError("fileName is required");
+        }
+
+        const key = `profiles/${Date.now()}-${fileName}`;
+
+        const result = await this.userService.getUploadUrl(key);
+
+        res.status(200).json({
+            status: "success",
+            data: result
+        });
+    } catch (e) {
+        next(e);
+    }
+};
+
     deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const id = Number(req.params.id);
