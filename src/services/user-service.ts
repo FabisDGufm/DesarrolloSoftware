@@ -172,17 +172,21 @@ export class UserService {
     // PROFILE PHOTO (S3 FLOW)
     // =========================
 
-    async updateProfilePhoto(id: number, fileName: string): Promise<{ url: string; key: string }> {
-        const user = await this.getUserById(id);
+async updateProfilePhoto(id: number, fileName: string): Promise<User> {
+    const user = await this.getUserById(id);
 
-        const key = `profiles/${Date.now()}-${fileName}`;
+    const key = `profiles/${Date.now()}-${fileName}`;
 
-        const { url } = await this.getUploadUrl(key);
+    const { url } = await this.getUploadUrl(key);
 
-        await this.repo.updateProfilePhoto(id, url);
+    const updatedUser = await this.repo.updateProfilePhoto(id, url);
 
-        return { url, key };
+    if (!updatedUser) {
+        throw new NotFoundError("User not found");
     }
+
+    return updatedUser;
+}
 
     // =========================
     // DELETE
