@@ -370,4 +370,146 @@ export class PostInteractionRepository {
         } while (lastKey);
         return total;
     }
+
+    async putSave(
+        authorId: number,
+        postId: number,
+        postCreatedAt: Date,
+        userId: number
+    ): Promise<void> {
+        const PK = this.pk(authorId, postId, postCreatedAt);
+        const SK = `SAVE#${userId}`;
+        const createdAt = new Date().toISOString();
+        await dynamo.send(
+            new PutCommand({
+                TableName: TABLE,
+                Item: {
+                    PK,
+                    SK,
+                    GSI1PK: `USER#${userId}`,
+                    GSI1SK: `SAVE#${authorId}#${postId}#${postCreatedAt.getTime()}`,
+                    userId,
+                    createdAt,
+                },
+            })
+        );
+    }
+
+    async deleteSave(
+        authorId: number,
+        postId: number,
+        postCreatedAt: Date,
+        userId: number
+    ): Promise<void> {
+        await dynamo.send(
+            new DeleteCommand({
+                TableName: TABLE,
+                Key: {
+                    PK: this.pk(authorId, postId, postCreatedAt),
+                    SK: `SAVE#${userId}`,
+                },
+            })
+        );
+    }
+
+    async getSave(
+        authorId: number,
+        postId: number,
+        postCreatedAt: Date,
+        userId: number
+    ): Promise<boolean> {
+        const r = await dynamo.send(
+            new GetCommand({
+                TableName: TABLE,
+                Key: {
+                    PK: this.pk(authorId, postId, postCreatedAt),
+                    SK: `SAVE#${userId}`,
+                },
+            })
+        );
+        return Boolean(r.Item);
+    }
+
+    async listSaves(
+        authorId: number,
+        postId: number,
+        postCreatedAt: Date
+    ): Promise<number[]> {
+        const userIds: number[] = [];
+        let lastKey: Record<string, unknown> | undefined;
+        const PK = this.pk(authorId, postId, postCreatedAt);
+        do {
+            const r = await dynamo.send(
+                new QueryCommand({
+                    TableName: TABLE,
+                    KeyConditionExpression: 'PK = :pk AND begins_with(SK, :p)',
+                    ExpressionAttributeValues: {
+                        ':pk': PK,
+                        ':p': 'SAVE#',
+                    },
+                    ExclusiveStartKey: lastKey,
+                })
+            );
+            for (const item of r.Items ?? []) {
+                const uid = item['userId'];
+                if (typeof uid === 'number') userIds.push(uid);
+            }
+            lastKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+        } while (lastKey);
+        return userIds;
+    }
+
+    async recordRepost(
+        authorId: number,
+        postId: number,
+        postCreatedAt: Date,
+        userId: number
+    ): Promise<{ repostId: string; createdAt: Date }> {
+        const PK = this.pk(authorId, postId, postCreatedAt);
+        const ts = Date.now();
+        const SK = `REPOST#${userId}#${ts}`;
+        const createdAt = new Date();
+        const createdAtIso = createdAt.toISOString();
+        await dynamo.send(
+            new PutCommand({
+                TableName: TABLE,
+                Item: {
+                    PK,
+                    SK,
+                    GSI1PK: `USER#${userId}`,
+                    GSI1SK: `REPOST#${authorId}#${postId}#${postCreatedAt.getTime()}#${ts}`,
+                    userId,
+                    createdAt: createdAtIso,
+                },
+            })
+        );
+        return { repostId: SK, createdAt };
+    }
+
+    async countReposts(
+        authorId: number,
+        postId: number,
+        postCreatedAt: Date
+    ): Promise<number> {
+        let total = 0;
+        let lastKey: Record<string, unknown> | undefined;
+        const PK = this.pk(authorId, postId, postCreatedAt);
+        do {
+            const r = await dynamo.send(
+                new QueryCommand({
+                    TableName: TABLE,
+                    KeyConditionExpression: 'PK = :pk AND begins_with(SK, :p)',
+                    ExpressionAttributeValues: {
+                        ':pk': PK,
+                        ':p': 'REPOST#',
+                    },
+                    Select: 'COUNT',
+                    ExclusiveStartKey: lastKey,
+                })
+            );
+            total += r.Count ?? 0;
+            lastKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+        } while (lastKey);
+        return total;
+    }
 }
