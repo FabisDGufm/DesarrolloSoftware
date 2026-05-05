@@ -16,7 +16,7 @@ import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
 import { corsMiddleware } from './middlewares/cors.js';
 import profileRoutes from './routes/user-profile-routes.js';
 import authRoutes from "./routes/auth-routes.js";
-
+import { latencyMiddleware } from "./middlewares/latency-middleware.js";
 
 
 
@@ -26,6 +26,7 @@ const port = process.env.PORT || 3000;
 
 app.use(corsMiddleware);
 app.use(express.json());
+app.use(latencyMiddleware);
 app.use('/profile', profileRoutes);
 app.use("/auth", authRoutes);
 
