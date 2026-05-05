@@ -1,3 +1,10 @@
+
+
+import dotenv from "dotenv";
+dotenv.config({ path: "/home/ubuntu/ElPasillo/DesarrolloSoftware/.env" });
+
+
+console.log("ENV:", process.env.DATABASE_URL);
 import express from 'express';
 import userRoutes from './routes/user-routes.js';
 import userRelationRoutes from './routes/user-relation-routes.js';
@@ -55,3 +62,6 @@ app.listen(port, () => {
 });
 
 export default app;
+
+process.stdin.resume();
+
