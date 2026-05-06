@@ -28,17 +28,22 @@ export class PostController {
         }
     };
 
+    // 🔥 ACTUALIZADO: soporta type
     createPost = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.userId;
+            const userId = (req as any).userId;
             if (!userId) throw new UnauthorizedError("Unauthorized");
 
-            const { text, imageUrl } = req.body;
+            const { text, imageUrl, type } = req.body;
+
+            const user = (req as any).user; // para universidad
 
             const post = await this.service.createPost(
                 userId,
                 text,
-                imageUrl
+                imageUrl,
+                type ?? "normal",
+                user?.university
             );
 
             res.status(201).json({ status: "success", data: post });
@@ -74,7 +79,7 @@ export class PostController {
 
     deletePost = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.userId;
+            const userId = (req as any).userId;
             if (!userId) throw new UnauthorizedError("Unauthorized");
 
             const authorId = Number(param(req, "authorId"));
@@ -85,6 +90,26 @@ export class PostController {
             res.status(200).json({ status: "success", data: result });
         } catch (err) {
             next(err);
+        }
+    };
+
+    // 🚀 NUEVO (ARREGLADO)
+    getNewsFeed = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const user = (req as any).user;
+
+            const posts = await this.service.getNewsFeed(user?.university);
+
+            res.status(200).json({
+                status: "success",
+                data: posts
+            });
+        } catch (e) {
+            next(e);
         }
     };
 }

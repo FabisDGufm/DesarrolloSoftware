@@ -5,8 +5,9 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-import { PostRepository } from "../repositories/post-repository";
+import { PostRepository } from "../repositories/post-repository.js";
 import { ValidationError, NotFoundError } from "../utils/custom-errors.js";
+import type { Post } from "../models/post.js";
 
 export class PostService {
     private repo: PostRepository;
@@ -39,13 +40,22 @@ export class PostService {
         return { url, key };
     }
 
-    async createPost(authorId: number, text: string, imageUrl?: string) {
-        const post = {
+    // 🔥 ACTUALIZADO
+    async createPost(
+        authorId: number,
+        text: string,
+        imageUrl?: string,
+        type: "normal" | "news" | "announcement" = "normal",
+        userUniversity?: string
+    ) {
+        const post: Post = {
             authorId,
             postId: randomUUID(),
             text,
             imageUrl: imageUrl ?? null,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            type,
+            university: type === "normal" ? null : userUniversity ?? null
         };
 
         return this.repo.create(post);
@@ -66,5 +76,25 @@ export class PostService {
         if (!deleted) throw new NotFoundError("Post not found");
 
         return { message: "Post deleted" };
+    }
+
+    // 🚀 NUEVO: noticias/anuncios
+    async getNewsFeed(userUniversity?: string) {
+        const posts: Post[] = await this.repo.findAll();
+
+        return posts
+            .filter((p: Post) => p.type === "news" || p.type === "announcement")
+            .sort((a: Post, b: Post) => {
+                // 1. misma universidad primero
+                if (a.university === userUniversity && b.university !== userUniversity) return -1;
+                if (b.university === userUniversity && a.university !== userUniversity) return 1;
+
+                // 2. anuncios primero
+                if (a.type === "announcement" && b.type !== "announcement") return -1;
+                if (b.type === "announcement" && a.type !== "announcement") return 1;
+
+                // 3. más reciente
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
     }
 }

@@ -4,4 +4,8 @@ export interface Post {
     text: string;
     imageUrl?: string | null;
     createdAt: string;
+
+    
+    type?: "normal" | "news" | "announcement";
+    university?: string | null;
 }

@@ -21,6 +21,8 @@ router.get("/:authorId/:postId", optionalAuth, controller.getPost);
 
 router.get("/user/:authorId", controller.getPostsByUser);
 
+router.get("/news", controller.getNewsFeed);
+
 router.delete("/:authorId/:postId", requireAuth, controller.deletePost);
 
 export default router;
