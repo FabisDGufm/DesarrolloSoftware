@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { PostInteractionService } from '../../services/post-interaction-service.js';
 import type { PostInteractionRepository } from '../../repositories/post-interaction-repository.js';
 import { jest } from '@jest/globals';
