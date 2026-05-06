@@ -96,16 +96,17 @@ export class UserRepository {
     }
 
     async delete(id: number): Promise<User | null> {
-        try {
-            const user = await prisma.user.delete({
-                where: { id },
-                include: { auth: true }
-            });
-            return this.mapUser(user);
-        } catch {
-            return null;
-        }
+    try {
+        await prisma.authentication.delete({ where: { userId: id } }).catch(() => {});
+        const user = await prisma.user.delete({
+            where: { id },
+            include: { auth: true }
+        });
+        return this.mapUser(user);
+    } catch {
+        return null;
     }
+}
 
     async getFriends(id: number): Promise<User[]> {
         const relations = await relationRepo.findAcceptedByUser(id);
