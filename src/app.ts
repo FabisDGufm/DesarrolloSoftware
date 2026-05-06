@@ -17,6 +17,7 @@ import { corsMiddleware } from './middlewares/cors.js';
 import profileRoutes from './routes/user-profile-routes.js';
 import authRoutes from "./routes/auth-routes.js";
 import { latencyMiddleware } from "./middlewares/latency-middleware.js";
+import anonDebateRoutes from './routes/anon-debate-routes.js';
 
 
 
@@ -47,6 +48,8 @@ app.use('/api/feed', feedRoutes);
 app.use('/api/explore', exploreRoutes);
 app.use('/api/interactions', postInteractionRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/debates', anonDebateRoutes);
+app.use('/debates', anonDebateRoutes);
 
 app.use('/users', userRoutes);
 app.use('/user-relations', userRelationRoutes);
