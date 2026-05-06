@@ -59,7 +59,6 @@ export class UserRepository {
             },
             include: { auth: true }
         });
-
         return this.mapUser(user);
     }
 
@@ -86,17 +85,16 @@ export class UserRepository {
             where: { userId: id },
             data: { password }
         });
-
         return this.findById(id);
     }
 
     async updateProfilePhoto(_id: number, _profilePhoto: string): Promise<User | null> {
-        // DynamoDB futuro
         return this.findById(_id);
     }
 
     async delete(id: number): Promise<User | null> {
         try {
+            await prisma.authentication.delete({ where: { userId: id } }).catch(() => {});
             const user = await prisma.user.delete({
                 where: { id },
                 include: { auth: true }
@@ -110,11 +108,9 @@ export class UserRepository {
     async getFriends(id: number): Promise<User[]> {
         const relations = await relationRepo.findAcceptedByUser(id);
         if (relations.length === 0) return [];
-
         const friendIds = relations.map(r =>
             r.requesterId === id ? r.receiverId : r.requesterId
         );
-
         const friends = await Promise.all(friendIds.map(fid => this.findById(fid)));
         return friends.filter((u): u is User => u !== null);
     }
