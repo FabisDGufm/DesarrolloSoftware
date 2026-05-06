@@ -3,8 +3,6 @@ import jwt from "jsonwebtoken";
 import type { User, CreateUserDTO } from '../models/user.js';
 import { ValidationError, NotFoundError } from '../utils/custom-errors.js';
 import { UserRepository } from '../repositories/user-repository.js';
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,9 +32,6 @@ export class UserService {
         this.repo = repo ?? new UserRepository();
     }
 
-    // ========================
-    // AUTH
-    // ========================
     private generateToken(userId: number, email: string): string {
         const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
         return jwt.sign(
@@ -45,42 +40,6 @@ export class UserService {
             { expiresIn: "3d" }
         );
     }
-
-    // ========================
-    // S3 CLIENT
-    // ========================
-    private s3 = new S3Client({
-        region: process.env.AWS_REGION as string,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
-        }
-    });
-
-    private bucket = process.env.AWS_BUCKET_NAME as string;
-
-    // ========================
-    // S3 - PRESIGNED URL
-    // ========================
-    async getUploadUrl(key: string): Promise<{ url: string; key: string }> {
-        if (!this.bucket) {
-            throw new Error("S3_BUCKET_NAME is not defined in .env");
-        }
-
-        const command = new PutObjectCommand({
-            Bucket: this.bucket,
-            Key: key,
-            ContentType: "image/jpeg",
-        });
-
-        const url = await getSignedUrl(this.s3, command, { expiresIn: 300 });
-
-        return { url, key };
-    }
-
-    // =========================
-    // USERS
-    // =========================
 
     async registerUser(data: CreateUserDTO) {
         if (!data.password)
@@ -187,12 +146,6 @@ export class UserService {
         return updated;
     }
 
-    return updatedUser;
-}
-
-    // =========================
-    // DELETE
-    // =========================
     async deleteUser(id: number) {
         const deletedUser = await this.repo.delete(id);
         if (!deletedUser)
