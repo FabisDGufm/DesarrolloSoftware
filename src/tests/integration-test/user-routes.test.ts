@@ -4,7 +4,7 @@ import userRoutes from '../../routes/user-routes.js';
 import { errorHandler, notFoundHandler } from '../../middlewares/error-handler.js';
 import 'dotenv/config';
 
-const uniqueEmail = () => `test_${Date.now()}_${Math.random().toString(36).slice(2)}@test.com`;
+const uniqueEmail = () => `test_${Date.now()}_${Math.random().toString(36).slice(2)}@ufm.edu`;
 
 describe('User Routes Integration Tests', () => {
     let app: express.Application;
