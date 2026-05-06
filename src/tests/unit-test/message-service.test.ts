@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { MessageService } from '../../services/message-service.js';
 import type { MessageRepository } from '../../repositories/message-repository.js';
 import { jest } from '@jest/globals';

@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { ExploreService } from '../../services/explore-service.js';
 import type { ExploreRepository } from '../../repositories/explore-repository.js';
 import { jest } from '@jest/globals';
