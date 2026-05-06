@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import userRoutes from '../../routes/user-routes.js';
 import { errorHandler, notFoundHandler } from '../../middlewares/error-handler.js';
+import 'dotenv/config';
 
 describe('User Routes Integration Tests', () => {
     let app: express.Application;

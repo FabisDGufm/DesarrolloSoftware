@@ -4,6 +4,7 @@ import userRoutes from '../../routes/user-routes.js';
 import relationRoutes from '../../routes/user-relation-routes.js';
 import profileRoutes from '../../routes/user-profile-routes.js';
 import { errorHandler, notFoundHandler } from '../../middlewares/error-handler.js';
+import 'dotenv/config';
 
 describe('UserProfile Routes Integration Tests', () => {
   let app: express.Application;

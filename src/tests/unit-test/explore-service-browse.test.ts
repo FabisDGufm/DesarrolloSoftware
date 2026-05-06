@@ -1,5 +1,6 @@
 import { ExploreService } from '../../services/explore-service.js';
 import type { ExploreRepository } from '../../repositories/explore-repository.js';
+import { jest } from '@jest/globals';
 
 describe('ExploreService browse + search routing', () => {
     let repo: jest.Mocked<

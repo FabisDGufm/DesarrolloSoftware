@@ -1,6 +1,7 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { UserProfileService } from '../../services/user-profile-service.js';
 
+
 describe('UserProfileService', () => {
   let service: UserProfileService;
 

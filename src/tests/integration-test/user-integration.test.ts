@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../app';
+import 'dotenv/config';
 
 describe('User integration test', () => {
   it('should return 200 when getting users', async () => {

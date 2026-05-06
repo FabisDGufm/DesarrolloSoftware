@@ -1,33 +1,54 @@
+import { jest } from '@jest/globals';
 import { UserRelationService } from '../../services/user-relation-service.js';
+import type { FriendRelation } from '../../models/user-relation.js';
 
 describe('UserRelationService', () => {
+    let repo: any;
     let service: UserRelationService;
 
+    const mockRelation: FriendRelation = {
+        id: 123,
+        requesterId: 1,
+        receiverId: 2,
+        status: 'pending',
+        createdAt: new Date(),
+    };
+
     beforeEach(() => {
-        service = new UserRelationService();
+        repo = {
+            findExistingRelation: jest.fn(),
+            create: jest.fn(),
+            findById: jest.fn(),
+            updateStatus: jest.fn(),
+            findAcceptedByUser: jest.fn(),
+            deleteAllForUser: jest.fn(),
+        };
+        service = new UserRelationService(repo);
     });
 
-    // CREATE
     it('should send friend request', async () => {
-        const relation = await service.sendFriendRequest(1, 2);
-        expect(relation.status).toBe('pending');
+        repo.findExistingRelation.mockResolvedValue(null);
+        repo.create.mockResolvedValue(mockRelation);
+        const result = await service.sendFriendRequest(1, 2);
+        expect(result.status).toBe('pending');
     });
 
-    // UPDATE (accept)
     it('should accept friend request', async () => {
-        const relation = await service.sendFriendRequest(3, 4);
-        const accepted = await service.acceptFriendRequest(relation.id);
-        expect(accepted.status).toBe('accepted');
+        repo.findById.mockResolvedValue(mockRelation);
+        repo.updateStatus.mockResolvedValue({ ...mockRelation, status: 'accepted' });
+        const result = await service.acceptFriendRequest(123);
+        expect(result.status).toBe('accepted');
     });
 
-    // READ
     it('should get friends list', async () => {
-        const friends = await service.getFriends(1);
-        expect(Array.isArray(friends)).toBe(true);
+        repo.findAcceptedByUser.mockResolvedValue([mockRelation]);
+        const result = await service.getFriends(1);
+        expect(Array.isArray(result)).toBe(true);
     });
 
-    // DELETE
     it('should remove all relations for user', async () => {
+        repo.deleteAllForUser.mockResolvedValue(undefined);
         await service.removeAllRelationsForUser(1);
+        expect(repo.deleteAllForUser).toHaveBeenCalledWith(1);
     });
 });

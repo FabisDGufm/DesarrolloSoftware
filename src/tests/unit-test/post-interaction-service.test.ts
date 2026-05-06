@@ -1,5 +1,6 @@
 import { PostInteractionService } from '../../services/post-interaction-service.js';
 import type { PostInteractionRepository } from '../../repositories/post-interaction-repository.js';
+import { jest } from '@jest/globals';
 
 describe('PostInteractionService', () => {
     const createdAt = '2025-01-01T12:00:00.000Z';

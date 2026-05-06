@@ -1,5 +1,6 @@
 import { MessageService } from '../../services/message-service.js';
 import type { MessageRepository } from '../../repositories/message-repository.js';
+import { jest } from '@jest/globals';
 
 describe('MessageService', () => {
     let repo: jest.Mocked<Pick<MessageRepository, 'sendMessage' | 'listConversation'>>;

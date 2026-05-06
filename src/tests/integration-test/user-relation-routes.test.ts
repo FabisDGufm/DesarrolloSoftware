@@ -3,6 +3,7 @@ import express from 'express';
 import relationRoutes from '../../routes/user-relation-routes.js';
 import userRoutes from '../../routes/user-routes.js';
 import { errorHandler, notFoundHandler } from '../../middlewares/error-handler.js';
+import 'dotenv/config';
 
 describe('UserRelation Routes Integration Tests', () => {
     let app: express.Application;

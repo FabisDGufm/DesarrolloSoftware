@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import exploreRoutes from '../../routes/explore-routes.js';
 import { errorHandler, notFoundHandler } from '../../middlewares/error-handler.js';
+import 'dotenv/config';
 
 describe('Explore Routes Integration Tests', () => {
     let app: express.Application;
