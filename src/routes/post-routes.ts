@@ -12,11 +12,11 @@ router.get("/upload-url", requireAuth, enforceModerationPolicy, controller.getUp
 
 router.post("/", requireAuth, enforceModerationPolicy, controller.createPost);
 
-router.get("/:authorId/:postId", optionalAuth, controller.getPost);
+router.get("/news", controller.getNewsFeed);
 
 router.get("/user/:authorId", controller.getPostsByUser);
 
-router.get("/news", controller.getNewsFeed);
+router.get("/:authorId/:postId", optionalAuth, controller.getPost);
 
 router.delete("/:authorId/:postId", requireAuth, enforceModerationPolicy, controller.deletePost);
 
