@@ -14,7 +14,7 @@ import profileRoutes from './routes/user-profile-routes.js';
 import authRoutes from "./routes/auth-routes.js";
 import { latencyMiddleware } from "./middlewares/latency-middleware.js";
 import anonDebateRoutes from './routes/anon-debate-routes.js';
-import promotionRoutes from './routes/promotion-routes.js';
+import promotionRoutes from "./routes/promotion-routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -50,8 +50,8 @@ app.use('/debates', anonDebateRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/posts', postRoutes);
 
-app.use('/api/promotions', promotionRoutes);
-app.use('/promotions', promotionRoutes);
+app.use("/api/promotions", promotionRoutes);
+app.use("/promotions", promotionRoutes);
 
 app.use('/users', userRoutes);
 app.use('/user-relations', userRelationRoutes);

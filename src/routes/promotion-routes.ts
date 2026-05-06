@@ -1,18 +1,59 @@
 import { Router } from "express";
+
 import { PromotionController } from "../controllers/promotion-controller.js";
-import { PromotionService } from "../services/promotion-service.js";
-import { PromotionRepository } from "../repositories/promotion-repository.js";
-import { requireAuth } from "../middlewares/require-auth.js";
+
+import { promotionService } from "../services/instances.js";
+
+import {
+    requireAuth,
+    optionalAuth
+} from "../middlewares/require-auth.js";
+
+import {
+    enforceModerationPolicy
+} from "../middlewares/moderation-policy-middleware.js";
 
 const router = Router();
 
-const repo = new PromotionRepository();
-const service = new PromotionService(repo);
-const controller = new PromotionController(service);
+const controller =
+    new PromotionController(promotionService);
 
-router.post("/", requireAuth, controller.create);
-router.get("/", controller.getAll);
-router.get("/my-university", requireAuth, controller.getMyUniversity);
-router.delete("/:id", requireAuth, controller.delete);
+router.get(
+    "/upload-url",
+    requireAuth,
+    enforceModerationPolicy,
+    controller.getUploadUrl
+);
+
+router.post(
+    "/",
+    requireAuth,
+    enforceModerationPolicy,
+    controller.createPromotion
+);
+
+router.get(
+    "/feed",
+    optionalAuth,
+    controller.getFeed
+);
+
+router.get(
+    "/user/:userId",
+    controller.getPromotionsByUser
+);
+
+router.get(
+    "/:userId/:promotionId",
+    optionalAuth,
+    controller.getPromotion
+);
+
+router.delete(
+    "/:userId/:promotionId",
+    requireAuth,
+    enforceModerationPolicy,
+    controller.deletePromotion
+);
 
 export default router;
