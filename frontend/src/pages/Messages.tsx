@@ -8,9 +8,10 @@ interface Friend {
 }
 
 interface Message {
-  senderId: number
-  receiverId: number
-  content: string
+  id: string
+  fromUserId: number
+  toUserId: number
+  text: string
   createdAt: string
 }
 
@@ -57,7 +58,8 @@ export function Messages() {
   const loadConversation = async (otherUserId: number) => {
     try {
       const { data } = await api.get(`/api/messages/with/${otherUserId}`)
-      const msgs = data.data || data
+      const payload = data.data ?? data
+      const msgs = payload?.messages ?? payload
       setMessages(Array.isArray(msgs) ? msgs : [])
     } catch {
       setMessages([])
@@ -69,8 +71,8 @@ export function Messages() {
     setSending(true)
     try {
       await api.post('/api/messages', {
-        receiverId: selectedFriend.id,
-        content: newMsg.trim(),
+        toUserId: selectedFriend.id,
+        text: newMsg.trim(),
       })
       setNewMsg('')
       loadConversation(selectedFriend.id)
@@ -170,9 +172,9 @@ export function Messages() {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`chat-bubble ${msg.senderId === Number(user.id) ? 'sent' : 'received'}`}
+                className={`chat-bubble ${msg.fromUserId === Number(user.id) ? 'sent' : 'received'}`}
               >
-                {msg.content}
+                {msg.text}
               </div>
             ))}
             <div ref={bottomRef} />

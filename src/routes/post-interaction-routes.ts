@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PostInteractionController } from '../controllers/post-interaction-controller.js';
 import { postInteractionService } from '../services/instances.js';
 import { optionalAuth, requireAuth } from '../middlewares/require-auth.js';
+import { enforceModerationPolicy } from '../middlewares/moderation-policy-middleware.js';
 
 const router = Router();
 const controller = new PostInteractionController(postInteractionService);
@@ -9,11 +10,13 @@ const controller = new PostInteractionController(postInteractionService);
 router.post(
     '/posts/:authorId/:postId/like',
     requireAuth,
+    enforceModerationPolicy,
     controller.like
 );
 router.delete(
     '/posts/:authorId/:postId/like',
     requireAuth,
+    enforceModerationPolicy,
     controller.unlike
 );
 router.get(
@@ -25,6 +28,7 @@ router.get(
 router.post(
     '/posts/:authorId/:postId/comments',
     requireAuth,
+    enforceModerationPolicy,
     controller.addComment
 );
 router.get(
@@ -34,17 +38,20 @@ router.get(
 router.patch(
     '/posts/:authorId/:postId/comments/:commentId',
     requireAuth,
+    enforceModerationPolicy,
     controller.updateComment
 );
 router.delete(
     '/posts/:authorId/:postId/comments/:commentId',
     requireAuth,
+    enforceModerationPolicy,
     controller.deleteComment
 );
 
 router.post(
     '/posts/:authorId/:postId/share',
     requireAuth,
+    enforceModerationPolicy,
     controller.share
 );
 router.get(
@@ -55,11 +62,13 @@ router.get(
 router.post(
     '/posts/:authorId/:postId/save',
     requireAuth,
+    enforceModerationPolicy,
     controller.save
 );
 router.delete(
     '/posts/:authorId/:postId/save',
     requireAuth,
+    enforceModerationPolicy,
     controller.unsave
 );
 router.get(
@@ -71,6 +80,7 @@ router.get(
 router.post(
     '/posts/:authorId/:postId/repost',
     requireAuth,
+    enforceModerationPolicy,
     controller.repost
 );
 router.get(

@@ -13,6 +13,7 @@ describe('UserService', () => {
         password: '$2b$10$hashedpassword',
         friends: [],
         role: 0,
+        accountStatus: 'ACTIVE',
         profilePhoto: '',
         createdAt: new Date(),
     };

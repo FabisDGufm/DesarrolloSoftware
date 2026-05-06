@@ -7,6 +7,9 @@ import { Profile } from './pages/Profile'
 import { CreatePost } from './pages/CreatePost'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
+import { AcademicHelp } from './pages/AcademicHelp'
+import { ReportContent } from './pages/ReportContent'
+import { ModerationPanel } from './pages/ModerationPanel'
 import { Debates } from './pages/Debates'
 
 function App() {
@@ -21,6 +24,9 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/ayuda" element={<AcademicHelp />} />
+        <Route path="/reportar" element={<ReportContent />} />
+        <Route path="/moderacion" element={<ModerationPanel />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:id" element={<Profile />} />
         <Route path="/create-post" element={<CreatePost />} />

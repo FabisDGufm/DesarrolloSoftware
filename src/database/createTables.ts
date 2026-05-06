@@ -7,12 +7,18 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const endpoint = process.env.AWS_ENDPOINT_URL;
+const useLocalStack = Boolean(endpoint);
+
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+  ...(endpoint ? { endpoint } : {}),
+  credentials: useLocalStack
+    ? { accessKeyId: "test", secretAccessKey: "test" }
+    : {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,6 +128,9 @@ const postInteractionsTable = {
 //  PK = CONV#<userA>#<userB>   SK = TS#<timestamp>#<messageId>
 //  (userA < userB siempre para que la conversación sea única)
 //
+//  También: espacios de ayuda académica (salas públicas por tema) reutilizan esta tabla:
+//  PK = SPACE#<slug>   SK = TS#<timestamp>#<messageId>   (fromUserId, text, createdAt; toUserId=0)
+//
 //  GSI ByUser: GSI1PK = USER#<senderId>   GSI1SK = TS#<timestamp>
 //  → todas las conversaciones de un usuario ordenadas por fecha
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,6 +150,37 @@ const messagesTable = {
   GlobalSecondaryIndexes: [
     {
       IndexName: "ByUser",
+      KeySchema: [
+        { AttributeName: "GSI1PK", KeyType: "HASH" as const },
+        { AttributeName: "GSI1SK", KeyType: "RANGE" as const },
+      ],
+      Projection: { ProjectionType: "ALL" as const },
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Tabla 6: ModerationReports  →  denuncias de usuarios (cola para moderadores)
+//
+//  PK = REPORT#<uuid>   SK = META
+//  GSI ByStatus: GSI1PK = OPEN | DISMISSED | ACTION_TAKEN   GSI1SK = TS#<iso>#<uuid>
+// ─────────────────────────────────────────────────────────────────────────────
+const moderationReportsTable = {
+  TableName: "ModerationReports",
+  BillingMode: "PAY_PER_REQUEST" as const,
+  KeySchema: [
+    { AttributeName: "PK", KeyType: "HASH" as const },
+    { AttributeName: "SK", KeyType: "RANGE" as const },
+  ],
+  AttributeDefinitions: [
+    { AttributeName: "PK", AttributeType: "S" as const },
+    { AttributeName: "SK", AttributeType: "S" as const },
+    { AttributeName: "GSI1PK", AttributeType: "S" as const },
+    { AttributeName: "GSI1SK", AttributeType: "S" as const },
+  ],
+  GlobalSecondaryIndexes: [
+    {
+      IndexName: "ByStatus",
       KeySchema: [
         { AttributeName: "GSI1PK", KeyType: "HASH" as const },
         { AttributeName: "GSI1SK", KeyType: "RANGE" as const },
@@ -179,6 +219,7 @@ export async function createDynamoTables() {
   await createIfNotExists(exploreTable);
   await createIfNotExists(postInteractionsTable);
   await createIfNotExists(messagesTable);
+  await createIfNotExists(moderationReportsTable);
   console.log("✅ DynamoDB listo\n");
 }
 
