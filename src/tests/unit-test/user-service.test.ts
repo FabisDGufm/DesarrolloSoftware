@@ -9,7 +9,7 @@ describe('UserService', () => {
     const mockUser: User = {
         id: 1,
         name: 'John Doe',
-        email: 'john@test.com',
+        email: 'john@ufm.edu',
         password: '$2b$10$hashedpassword',
         friends: [],
         role: 0,
@@ -29,12 +29,12 @@ describe('UserService', () => {
     });
 
     it('should throw if password is missing', async () => {
-        await expect(service.registerUser({ name: 'John', email: 'j@j.com', password: '', role: 1 }))
+        await expect(service.registerUser({ name: 'John', email: 'j@ufm.edu', password: '', role: 1 }))
             .rejects.toThrow('Password is required');
     });
 
     it('should throw if password is too short', async () => {
-        await expect(service.registerUser({ name: 'John', email: 'j@j.com', password: 'short', role: 1 }))
+        await expect(service.registerUser({ name: 'John', email: 'j@ufm.edu', password: 'short', role: 1 }))
             .rejects.toThrow('Password must be at least 8 characters');
     });
 
@@ -46,7 +46,7 @@ describe('UserService', () => {
     it('should register user successfully', async () => {
         repo.findByEmail.mockResolvedValue(null);
         repo.create.mockResolvedValue(mockUser);
-        const result = await service.registerUser({ name: 'John Doe', email: 'john@test.com', password: 'password123', role: 1 });
+        const result = await service.registerUser({ name: 'John Doe', email: 'john@ufm.edu', password: 'password123', role: 1 });
         expect(result.user.name).toBe('John Doe');
         expect(result.authentication_token).toBeDefined();
     });
