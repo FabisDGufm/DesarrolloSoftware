@@ -5,7 +5,7 @@ describe('UserService', () => {
     let userService: UserService;
 
     const uniqueEmail = () =>
-        `test_${Date.now()}_${Math.random()}@mail.com`;
+        `test_${Date.now()}_${Math.random()}@ufm.edu`;
 
     beforeEach(() => {
         userService = new UserService();
