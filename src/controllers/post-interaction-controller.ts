@@ -180,4 +180,98 @@ export class PostInteractionController {
             next(e);
         }
     };
+
+    save = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.userId;
+            if (userId === undefined) {
+                next(new UnauthorizedError('Unauthorized'));
+                return;
+            }
+            const data = await this.service.save(
+                userId,
+                param(req, 'authorId'),
+                param(req, 'postId'),
+                req.body
+            );
+            res.status(200).json({ status: 'success', data });
+        } catch (e) {
+            next(e);
+        }
+    };
+
+    unsave = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.userId;
+            if (userId === undefined) {
+                next(new UnauthorizedError('Unauthorized'));
+                return;
+            }
+            const data = await this.service.unsave(
+                userId,
+                param(req, 'authorId'),
+                param(req, 'postId'),
+                req.body
+            );
+            res.status(200).json({ status: 'success', data });
+        } catch (e) {
+            next(e);
+        }
+    };
+
+    getSaves = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const createdAt = req.query['createdAt'];
+            const data = await this.service.getSavesSummary(
+                req.userId,
+                param(req, 'authorId'),
+                param(req, 'postId'),
+                typeof createdAt === 'string'
+                    ? createdAt
+                    : Array.isArray(createdAt)
+                      ? createdAt[0]
+                      : createdAt
+            );
+            res.status(200).json({ status: 'success', data });
+        } catch (e) {
+            next(e);
+        }
+    };
+
+    repost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.userId;
+            if (userId === undefined) {
+                next(new UnauthorizedError('Unauthorized'));
+                return;
+            }
+            const data = await this.service.repost(
+                userId,
+                param(req, 'authorId'),
+                param(req, 'postId'),
+                req.body
+            );
+            res.status(201).json({ status: 'success', data });
+        } catch (e) {
+            next(e);
+        }
+    };
+
+    getReposts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const createdAt = req.query['createdAt'];
+            const data = await this.service.getRepostStats(
+                param(req, 'authorId'),
+                param(req, 'postId'),
+                typeof createdAt === 'string'
+                    ? createdAt
+                    : Array.isArray(createdAt)
+                      ? createdAt[0]
+                      : createdAt
+            );
+            res.status(200).json({ status: 'success', data });
+        } catch (e) {
+            next(e);
+        }
+    };
 }

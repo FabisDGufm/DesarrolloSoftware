@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { PostComment, PostLikeSummary } from '../models/post-interaction.js';
+import type {
+    PostComment,
+    PostLikeSummary,
+    PostSaveSummary,
+} from '../models/post-interaction.js';
 import type { PostInteractionRepository } from '../repositories/post-interaction-repository.js';
 import {
     parsePostCreatedAt,
@@ -231,6 +235,102 @@ export class PostInteractionService {
             createdAtRaw
         );
         const count = await this.repo.countShares(
+            authorId,
+            postId,
+            postCreatedAt
+        );
+        return { count };
+    }
+
+    async save(
+        userId: number,
+        authorIdRaw: string,
+        postIdRaw: string,
+        body: { createdAt?: unknown }
+    ): Promise<{ ok: true }> {
+        const { authorId, postId, postCreatedAt } = this.resolvePost(
+            authorIdRaw,
+            postIdRaw,
+            body.createdAt
+        );
+        await this.repo.putSave(authorId, postId, postCreatedAt, userId);
+        return { ok: true };
+    }
+
+    async unsave(
+        userId: number,
+        authorIdRaw: string,
+        postIdRaw: string,
+        body: { createdAt?: unknown }
+    ): Promise<{ ok: true }> {
+        const { authorId, postId, postCreatedAt } = this.resolvePost(
+            authorIdRaw,
+            postIdRaw,
+            body.createdAt
+        );
+        await this.repo.deleteSave(authorId, postId, postCreatedAt, userId);
+        return { ok: true };
+    }
+
+    async getSavesSummary(
+        viewerUserId: number | undefined,
+        authorIdRaw: string,
+        postIdRaw: string,
+        createdAtRaw: unknown
+    ): Promise<PostSaveSummary> {
+        const { authorId, postId, postCreatedAt } = this.resolvePost(
+            authorIdRaw,
+            postIdRaw,
+            createdAtRaw
+        );
+        const userIds = await this.repo.listSaves(authorId, postId, postCreatedAt);
+        const savedByMe =
+            viewerUserId !== undefined
+                ? await this.repo.getSave(
+                      authorId,
+                      postId,
+                      postCreatedAt,
+                      viewerUserId
+                  )
+                : false;
+        return {
+            userIds,
+            count: userIds.length,
+            savedByMe,
+        };
+    }
+
+    async repost(
+        userId: number,
+        authorIdRaw: string,
+        postIdRaw: string,
+        body: { createdAt?: unknown }
+    ): Promise<{ repostId: string; createdAt: string }> {
+        const { authorId, postId, postCreatedAt } = this.resolvePost(
+            authorIdRaw,
+            postIdRaw,
+            body.createdAt
+        );
+        const r = await this.repo.recordRepost(
+            authorId,
+            postId,
+            postCreatedAt,
+            userId
+        );
+        return { repostId: r.repostId, createdAt: r.createdAt.toISOString() };
+    }
+
+    async getRepostStats(
+        authorIdRaw: string,
+        postIdRaw: string,
+        createdAtRaw: unknown
+    ): Promise<{ count: number }> {
+        const { authorId, postId, postCreatedAt } = this.resolvePost(
+            authorIdRaw,
+            postIdRaw,
+            createdAtRaw
+        );
+        const count = await this.repo.countReposts(
             authorId,
             postId,
             postCreatedAt

@@ -80,11 +80,13 @@ const exploreTable = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Tabla 4: PostInteractions  →  likes, comments, shares
+//  Tabla 4: PostInteractions  →  likes, comments, shares, saves, reposts
 //
 //  LIKE:    PK = POST#<postId>   SK = LIKE#<userId>
 //  COMMENT: PK = POST#<postId>   SK = COMMENT#<timestamp>#<commentId>
 //  SHARE:   PK = POST#<postId>   SK = SHARE#<userId>#<timestamp>
+//  SAVE:    PK = POST#<...>       SK = SAVE#<userId>   (guardar / bookmark)
+//  REPOST:  PK = POST#<...>       SK = REPOST#<userId>#<timestamp>
 //
 //  GSI ByUser: GSI1PK = USER#<userId>   GSI1SK = LIKE#<postId>
 //  → "qué posts le dieron like / comentaron / compartieron"

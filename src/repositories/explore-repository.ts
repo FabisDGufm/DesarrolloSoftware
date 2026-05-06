@@ -8,6 +8,24 @@ import type { ExploreResult } from "../models/explore.js";
 const TABLE = "Explore";
 
 export class ExploreRepository {
+    /**
+     * Muestra ítems indexados en Explore (sin filtro de texto).
+     * Scan acotado; en producción se usaría feed curado u OpenSearch.
+     */
+    async listFeatured(limit = 50): Promise<ExploreResult[]> {
+        const result = await dynamo.send(
+            new ScanCommand({
+                TableName: TABLE,
+                Limit: limit,
+            })
+        );
+        return (result.Items ?? []).map((i) => ({
+            id: i.id as number,
+            type: i.type as "user" | "post" | "topic",
+            title: i.title as string,
+            snippet: i.snippet as string,
+        }));
+    }
 
     // Buscar por query — filtra por title o snippet que contengan el texto
     async search(query: string): Promise<ExploreResult[]> {
