@@ -49,6 +49,10 @@ export function Layout() {
               <span>Moderacion</span>
             </NavLink>
           )}
+          <NavLink to="/debates" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon">&#128172;</span>
+            <span>Sin Filtro</span>
+          </NavLink>
           {isAuthenticated && (
             <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">&#9673;</span>

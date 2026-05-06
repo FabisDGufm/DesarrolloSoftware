@@ -8,19 +8,15 @@ const router = Router();
 
 const controller = new PostController(postService);
 
-// =========================
-// S3 upload URL
-// =========================
 router.get("/upload-url", requireAuth, enforceModerationPolicy, controller.getUploadUrl);
 
-// =========================
-// POSTS
-// =========================
 router.post("/", requireAuth, enforceModerationPolicy, controller.createPost);
 
 router.get("/:authorId/:postId", optionalAuth, controller.getPost);
 
 router.get("/user/:authorId", controller.getPostsByUser);
+
+router.get("/news", controller.getNewsFeed);
 
 router.delete("/:authorId/:postId", requireAuth, enforceModerationPolicy, controller.deletePost);
 

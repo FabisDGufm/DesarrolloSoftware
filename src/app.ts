@@ -13,6 +13,8 @@ import { corsMiddleware } from './middlewares/cors.js';
 import profileRoutes from './routes/user-profile-routes.js';
 import authRoutes from "./routes/auth-routes.js";
 import { latencyMiddleware } from "./middlewares/latency-middleware.js";
+import anonDebateRoutes from './routes/anon-debate-routes.js';
+import promotionRoutes from './routes/promotion-routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -42,7 +44,14 @@ app.use('/api/interactions', postInteractionRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/help-spaces', helpSpaceRoutes);
 app.use('/api/moderation', moderationRoutes);
+app.use('/api/debates', anonDebateRoutes);
+app.use('/debates', anonDebateRoutes);
+
 app.use('/api/posts', postRoutes);
+app.use('/posts', postRoutes);
+
+app.use('/api/promotions', promotionRoutes);
+app.use('/promotions', promotionRoutes);
 
 app.use('/users', userRoutes);
 app.use('/user-relations', userRelationRoutes);
@@ -52,7 +61,6 @@ app.use('/interactions', postInteractionRoutes);
 app.use('/messages', messageRoutes);
 app.use('/help-spaces', helpSpaceRoutes);
 app.use('/moderation', moderationRoutes);
-app.use('/posts', postRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -1,12 +1,19 @@
 import { dynamo } from "../config/dynamodb.js";
-import { PutCommand, GetCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import {
+    PutCommand,
+    GetCommand,
+    DeleteCommand,
+    QueryCommand,
+    ScanCommand
+} from "@aws-sdk/lib-dynamodb";
+
 import type { Post } from "../models/post.js";
 
 const TABLE = "Posts";
 
 export class PostRepository {
 
-    async create(post: Post) {
+    async create(post: Post): Promise<Post> {
         await dynamo.send(
             new PutCommand({
                 TableName: TABLE,
@@ -17,7 +24,7 @@ export class PostRepository {
         return post;
     }
 
-    async findById(authorId: number, postId: string) {
+    async findById(authorId: number, postId: string): Promise<Post | undefined> {
         const r = await dynamo.send(
             new GetCommand({
                 TableName: TABLE,
@@ -40,7 +47,7 @@ export class PostRepository {
         return r.Attributes;
     }
 
-    async findByAuthor(authorId: number) {
+    async findByAuthor(authorId: number): Promise<Post[]> {
         const r = await dynamo.send(
             new QueryCommand({
                 TableName: TABLE,
@@ -51,6 +58,17 @@ export class PostRepository {
             })
         );
 
-        return r.Items ?? [];
+        return (r.Items ?? []) as Post[];
+    }
+
+    // 🔥 NUEVO (para noticias)
+    async findAll(): Promise<Post[]> {
+        const r = await dynamo.send(
+            new ScanCommand({
+                TableName: TABLE
+            })
+        );
+
+        return (r.Items ?? []) as Post[];
     }
 }

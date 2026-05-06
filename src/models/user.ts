@@ -3,13 +3,14 @@ export interface User {
     name: string;
     email: string;
     password: string;
-    profilePhoto?: string; // URL o ruta de la foto
+    profilePhoto?: string;
     friends: number[];
     /** 0 usuario, 1 moderador, 2 admin */
     role: number;
     /** ACTIVE | SUSPENDED | BANNED */
     accountStatus: string;
     suspendedUntil?: Date | null;
+    university?: string;
     createdAt: Date;
 }
 
