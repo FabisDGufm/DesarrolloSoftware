@@ -4,14 +4,23 @@ import { CloudWatchClient, PutMetricDataCommand } from "@aws-sdk/client-cloudwat
 
 const region = process.env.AWS_REGION;
 
-if (!region) {
-  throw new Error("AWS_REGION no está definida");
-}
+const skipMetrics =
+  process.env.CI === "true" ||
+  process.env.DISABLE_CLOUDWATCH_METRICS === "1" ||
+  !region;
 
-const cloudwatch = new CloudWatchClient({
-  region: region
-});
+const cloudwatch = region
+  ? new CloudWatchClient({
+      region,
+    })
+  : null;
+
 export const latencyMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (skipMetrics || !cloudwatch) {
+    next();
+    return;
+  }
+
   const start = Date.now();
 
   res.on("finish", async () => {
