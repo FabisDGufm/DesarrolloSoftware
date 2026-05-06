@@ -15,6 +15,7 @@ export class UserRepository {
             friends: [],
             role: 0,
             profilePhoto: "",
+            university: u.university ?? undefined,
             createdAt: u.createdAt
         };
     }
@@ -53,6 +54,7 @@ export class UserRepository {
             data: {
                 name: data.name,
                 email: data.email,
+                university: data.university,
                 auth: {
                     create: { password: data.password }
                 }

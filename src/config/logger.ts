@@ -15,8 +15,8 @@ const logger = winston.createLogger({
       logGroupName: 'DesarrolloSoftware',
       logStreamName: 'api-logs',
       awsRegion: process.env.AWS_REGION || 'us-east-1',
-      awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      awsSecretKey: process.env.AWS_SECRET_ACCESS_KEY,
+      awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+      awsSecretKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
     })
   ]
 });
