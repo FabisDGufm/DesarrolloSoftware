@@ -11,27 +11,22 @@ export const corsMiddleware = (
         'http://localhost:3001',  // React default
         'http://localhost:4200',  // Angular default
     ];
-    
+
     const origin = req.headers.origin;
     
-    // Permitir si está en la lista, O si es un subdominio de amplifyapp.com
-    const isAllowed = origin && (
-        allowedOrigins.includes(origin) ||
-        /^https:\/\/[a-zA-Z0-9.-]+\.amplifyapp\.com$/.test(origin)
-    );
-    
-    if (isAllowed) {
+    if (origin && allowedOrigins.includes(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
-    
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
+
     // Manejar preflight requests
     if (req.method === 'OPTIONS') {
         res.sendStatus(204);
         return;
     }
+
     next();
 };
