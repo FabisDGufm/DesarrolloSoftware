@@ -14,6 +14,10 @@ import { ExploreService } from './explore-service.js';
 import { PostInteractionService } from './post-interaction-service.js';
 import { MessageService } from './message-service.js';
 import { UserProfileService } from './user-profile-service.js';
+import { PostService } from "./post-service.js";
+import { PostRepository } from "../repositories/post-repository.js";
+
+export const postService = new PostService(new PostRepository());
 
 // Repositorios — UserRepository sigue en MariaDB via Prisma
 //               Los demás ahora usan DynamoDB
