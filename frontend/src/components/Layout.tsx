@@ -35,6 +35,20 @@ export function Layout() {
             <span className="nav-icon">&#9883;</span>
             <span>Mensajes</span>
           </NavLink>
+          <NavLink to="/ayuda" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon">&#9998;</span>
+            <span>Ayuda</span>
+          </NavLink>
+          <NavLink to="/reportar" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon">&#9888;</span>
+            <span>Reportar</span>
+          </NavLink>
+          {(user?.role ?? 0) >= 1 && (
+            <NavLink to="/moderacion" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <span className="nav-icon">&#9632;</span>
+              <span>Moderacion</span>
+            </NavLink>
+          )}
           {isAuthenticated && (
             <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">&#9673;</span>

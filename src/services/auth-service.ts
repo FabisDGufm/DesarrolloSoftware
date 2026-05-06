@@ -1,5 +1,5 @@
 import type { LoginDto } from "../models/user.js";
-import { ValidationError } from "../utils/custom-errors.js";
+import { ForbiddenError, ValidationError } from "../utils/custom-errors.js";
 import type { UserRepository } from "../repositories/user-repository.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -20,6 +20,12 @@ export class AuthService {
         const isValid = await bcrypt.compare(dto.password, user.password);
         if (!isValid) {
             throw new ValidationError("Invalid credentials");
+        }
+
+        if (user.accountStatus.toUpperCase() === "BANNED") {
+            throw new ForbiddenError(
+                "Tu cuenta fue inhabilitada. Contacta soporte si crees que es un error."
+            );
         }
 
         const token = this.generateToken(user.id, user.email);

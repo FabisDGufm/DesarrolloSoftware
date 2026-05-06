@@ -1,0 +1,6 @@
+-- Moderacion: rol, estado de cuenta y suspension temporal
+
+ALTER TABLE `User` ADD COLUMN `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE `User` ADD COLUMN `role` INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE `User` ADD COLUMN `accountStatus` VARCHAR(191) NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE `User` ADD COLUMN `suspendedUntil` DATETIME(3) NULL;

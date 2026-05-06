@@ -53,4 +53,3 @@ La idea principal de El Pasillo es unir a los estudiantes de Guatemala, crear v√
 * Poder ver noticias de las Universidades
 * Secci√≥n de debate sin filtro
 * Noticias y anuncios relevantes
-

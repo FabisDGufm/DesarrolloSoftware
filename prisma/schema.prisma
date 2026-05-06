@@ -19,6 +19,13 @@ model User {
   email String @unique
   name  String?
 
+  createdAt        DateTime  @default(now())
+  /// 0 = usuario, 1 = moderador, 2 = admin
+  role             Int       @default(0)
+  /// ACTIVE | SUSPENDED | BANNED
+  accountStatus    String    @default("ACTIVE")
+  suspendedUntil   DateTime?
+
   // relación 1 a 1 con Authentication
   auth  Authentication?
 }
