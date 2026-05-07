@@ -17,6 +17,7 @@ import anonDebateRoutes from './routes/anon-debate-routes.js';
 import promotionRoutes from "./routes/promotion-routes.js";
 import newsRoutes from "./routes/news-routes.js";
 import { userService } from "./services/instances.js";
+import announcementRoutes from "./routes/announcement-routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -57,6 +58,9 @@ app.use("/promotions", promotionRoutes);
 
 app.use("/api/news", newsRoutes);
 app.use("/news", newsRoutes);
+
+app.use("/api/announcements", announcementRoutes);
+app.use("/announcements", announcementRoutes);
 
 app.use('/users', userRoutes);
 app.use('/user-relations', userRelationRoutes);

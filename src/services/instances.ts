@@ -23,6 +23,9 @@ import { ModerationService } from './moderation-service.js';
 import { PromotionRepository } from "../repositories/promotion-repository.js";
 import { PromotionService } from "./promotion-service.js";
 
+import { AnnouncementRepository } from "../repositories/announcement-repository.js";
+import { AnnouncementService } from "./announcement-service.js";
+
 const postRepository = new PostRepository();
 
 // Repositorios — UserRepository sigue en MariaDB via Prisma
@@ -58,3 +61,7 @@ export const userProfileService = new UserProfileService(userService, relationSe
 
 export const promotionRepository = new PromotionRepository();
 export const promotionService = new PromotionService(promotionRepository);
+
+const announcementRepository = new AnnouncementRepository();
+
+export const announcementService = new AnnouncementService(announcementRepository);
