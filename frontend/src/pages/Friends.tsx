@@ -24,6 +24,7 @@ export function Friends() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'discover' | 'requests' | 'friends'>('discover')
   const [sending, setSending] = useState<number | null>(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     loadAll()
@@ -79,6 +80,11 @@ export function Friends() {
 
   const isFriend = (id: number) => friends.some((f) => f.id === id)
 
+  const filteredUsers = users.filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
+    (u.university || '').toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <>
       <div className="page-header">
@@ -100,7 +106,16 @@ export function Friends() {
         <div className="loading-spinner"><div className="spinner" /></div>
       ) : tab === 'discover' ? (
         <div>
-          {users.map((u) => (
+          <div style={{ padding: '12px 16px' }}>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o universidad..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 14, boxSizing: 'border-box' }}
+            />
+          </div>
+          {filteredUsers.map((u) => (
             <div key={u.id} className="post-card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div className="avatar">{(u.name || '?')[0].toUpperCase()}</div>
               <div style={{ flex: 1 }}>
