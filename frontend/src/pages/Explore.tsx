@@ -9,7 +9,7 @@ interface Item {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
-  type?: 'normal' | 'news' | 'announcement'
+  type?: 'announcement'
 }
 
 type Tab = 'posts' | 'news' | 'announcements'
@@ -82,7 +82,7 @@ export function Explore() {
   const loadAnnouncements = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/explore/announcements')
+      const { data } = await api.get('/api/announcements')
       setResults(Array.isArray(data.data) ? data.data : [])
     } catch {
       setResults([])
@@ -97,17 +97,15 @@ export function Explore() {
     setLoading(true)
 
     try {
-      await api.post('/api/posts', {
+      await api.post('/api/announcements', {
         text: announcementText,
-        type: 'announcement'
+        imageUrl: null
       })
 
       setAnnouncementText('')
       setShowModal(false)
 
-      if (tab === 'announcements') {
-        loadAnnouncements()
-      }
+      loadAnnouncements()
     } catch {
       setLoading(false)
     }
@@ -116,6 +114,7 @@ export function Explore() {
   return (
     <>
       <div className="page-header">
+
         <div className="search-bar">
           <span className="search-icon">🔍</span>
           <input
@@ -152,12 +151,18 @@ export function Explore() {
       </div>
 
       {tab === 'announcements' && (
-        <div style={{ padding: '10px 0' }}>
+        <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'flex-end' }}>
           <button
-            className="create-post-btn"
+            className="page-tab active"
+            style={{
+              cursor: 'pointer',
+              border: 'none',
+              padding: '8px 14px',
+              borderRadius: '10px'
+            }}
             onClick={() => setShowModal(true)}
           >
-            Publicar anuncio
+            + Publicar anuncio
           </button>
         </div>
       )}
@@ -166,12 +171,13 @@ export function Explore() {
         <div className="modal-overlay">
           <div className="modal-content">
             <textarea
+              placeholder="Escribe tu anuncio..."
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
-              placeholder="Escribe tu anuncio..."
+              style={{ width: '100%', minHeight: '120px' }}
             />
 
-            <div className="modal-actions">
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
               <button onClick={createAnnouncement}>
                 Publicar
               </button>
