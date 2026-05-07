@@ -22,13 +22,12 @@ interface AnnouncementItem {
   createdBy: number
 }
 
-type Item = PostItem | AnnouncementItem
 type Tab = 'posts' | 'news' | 'announcements'
 
 export function Explore() {
   const [tab, setTab] = useState<Tab>('posts')
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Item[]>([])
+  const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   const [showModal, setShowModal] = useState(false)
@@ -36,9 +35,7 @@ export function Explore() {
   const [announcementText, setAnnouncementText] = useState('')
   const [eventDate, setEventDate] = useState('')
 
-  /* =========================
-     RESET POR TAB
-  ========================= */
+  /* ================= LOAD ================= */
   useEffect(() => {
     setResults([])
     setQuery('')
@@ -48,9 +45,7 @@ export function Explore() {
     if (tab === 'announcements') loadAnnouncements()
   }, [tab])
 
-  /* =========================
-     SEARCH POSTS
-  ========================= */
+  /* ================= SEARCH POSTS ================= */
   useEffect(() => {
     if (tab !== 'posts') return
 
@@ -64,53 +59,40 @@ export function Explore() {
   const searchPosts = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/posts/search', {
+      const { data } = await api.get('/api/explore/search', {
         params: { q: query }
       })
 
       setResults(Array.isArray(data.data) ? data.data : [])
-    } catch {
-      setResults([])
     } finally {
       setLoading(false)
     }
   }
 
-  /* =========================
-     NEWS
-  ========================= */
   const loadNews = async () => {
     setLoading(true)
     try {
       const { data } = await api.get('/api/news/guatemala')
       setResults(Array.isArray(data.data) ? data.data : [])
-    } catch {
-      setResults([])
     } finally {
       setLoading(false)
     }
   }
 
-  /* =========================
-     ANNOUNCEMENTS
-  ========================= */
   const loadAnnouncements = async () => {
     setLoading(true)
     try {
       const { data } = await api.get('/api/announcements')
       setResults(Array.isArray(data.data) ? data.data : [])
-    } catch {
-      setResults([])
     } finally {
       setLoading(false)
     }
   }
 
   const createAnnouncement = async () => {
-    if (!announcementTitle.trim() || !announcementText.trim()) return
+    if (!announcementTitle || !announcementText) return
 
     setLoading(true)
-
     try {
       await api.post('/api/announcements', {
         title: announcementTitle,
@@ -130,62 +112,29 @@ export function Explore() {
     }
   }
 
-  const isPost = (r: any): r is PostItem => 'postId' in r
-  const isAnnouncement = (r: any): r is AnnouncementItem => 'announcementId' in r
-
-  /* =========================
-     UI
-  ========================= */
+  /* ================= RENDER ================= */
   return (
     <>
       {/* HEADER */}
       <div className="page-header">
 
-        {/* SEARCH SOLO POSTS */}
         {tab === 'posts' && (
           <div className="search-bar">
             <span>🔍</span>
             <input
-              type="text"
-              placeholder="Buscar posts..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar posts..."
             />
           </div>
         )}
 
         <div className="page-tabs">
-          <button
-            className={tab === 'posts' ? 'active' : ''}
-            onClick={() => setTab('posts')}
-          >
-            Posts
-          </button>
-
-          <button
-            className={tab === 'news' ? 'active' : ''}
-            onClick={() => setTab('news')}
-          >
-            Noticias
-          </button>
-
-          <button
-            className={tab === 'announcements' ? 'active' : ''}
-            onClick={() => setTab('announcements')}
-          >
-            Anuncios
-          </button>
+          <button onClick={() => setTab('posts')}>Posts</button>
+          <button onClick={() => setTab('news')}>Noticias</button>
+          <button onClick={() => setTab('announcements')}>Anuncios</button>
         </div>
       </div>
-
-      {/* BOTÓN ANUNCIO */}
-      {tab === 'announcements' && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 0' }}>
-          <button onClick={() => setShowModal(true)}>
-            + Publicar anuncio
-          </button>
-        </div>
-      )}
 
       {/* MODAL */}
       {showModal && (
@@ -199,7 +148,7 @@ export function Explore() {
             />
 
             <textarea
-              placeholder="Texto del anuncio"
+              placeholder="Texto"
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
             />
@@ -210,15 +159,8 @@ export function Explore() {
               onChange={(e) => setEventDate(e.target.value)}
             />
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowModal(false)}>
-                Cancelar
-              </button>
-
-              <button onClick={createAnnouncement}>
-                Publicar
-              </button>
-            </div>
+            <button onClick={createAnnouncement}>Publicar</button>
+            <button onClick={() => setShowModal(false)}>Cancelar</button>
 
           </div>
         </div>
@@ -229,77 +171,53 @@ export function Explore() {
         <div>Cargando...</div>
       ) : results.length === 0 ? (
         <div>Sin resultados</div>
+      ) : tab === 'posts' ? (
+        /* ================= POSTS ================= */
+        results.map((r: PostItem) => (
+          <PostCard
+            key={r.postId}
+            authorId={r.authorId}
+            postId={r.postId}
+            authorName={r.authorName}
+            text={r.text}
+            imageUrl={r.imageUrl}
+            createdAt={r.createdAt}
+          />
+        ))
+      ) : tab === 'news' ? (
+        /* ================= NEWS (SIN POSTCARD) ================= */
+        results.map((r: any) => (
+          <div key={r.createdAt} className="post-card">
+
+            <div className="post-header">
+              <span className="post-author">
+                {typeof r.authorName === 'string' ? r.authorName : 'Noticia'}
+              </span>
+
+              <span className="post-time">
+                {new Date(r.createdAt).toLocaleString()}
+              </span>
+            </div>
+
+            <div className="post-text">{r.text}</div>
+
+            {r.imageUrl && (
+              <div className="post-image">
+                <img src={r.imageUrl} />
+              </div>
+            )}
+          </div>
+        ))
       ) : (
-        results.map((r) => {
-          /* =========================
-             POSTS
-          ========================= */
-          if (isPost(r)) {
-            return (
-              <PostCard
-                key={r.postId}
-                authorId={r.authorId}
-                postId={r.postId}
-                authorName={r.authorName}
-                text={r.text}
-                imageUrl={r.imageUrl}
-                createdAt={r.createdAt}
-              />
-            )
-          }
-
-          /* =========================
-             NEWS (SIN POSTCARD)
-          ========================= */
-          if (tab === 'news') {
-            return (
-              <div
-                key={`news-${r.createdAt}-${r.text}`}
-                className="post-card"
-              >
-                <div className="post-header">
-                  <span className="post-author">
-                    {('authorName' in r && typeof r.authorName === 'string')
-                      ? r.authorName
-                      : 'Noticia'}
-                  </span>
-
-                  <span className="post-time">
-                    {new Date(r.createdAt).toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="post-text">{r.text}</div>
-
-                {r.imageUrl && (
-                  <div className="post-image">
-                    <img src={r.imageUrl} alt="" />
-                  </div>
-                )}
-              </div>
-            )
-          }
-
-          /* =========================
-             ANNOUNCEMENTS
-          ========================= */
-          if (isAnnouncement(r)) {
-            return (
-              <div
-                key={r.announcementId}
-                className="post-card"
-              >
-                <h3>{r.title}</h3>
-                <p>{r.text}</p>
-
-                {r.eventDate && <small>{r.eventDate}</small>}
-                <small>{r.university}</small>
-              </div>
-            )
-          }
-
-          return null
-        })
+        /* ================= ANNOUNCEMENTS ================= */
+        results.map((r: AnnouncementItem) => (
+          <div key={r.announcementId} className="post-card">
+            <h3>{r.title}</h3>
+            <p>{r.text}</p>
+            {r.eventDate && <small>{r.eventDate}</small>}
+            <small>{r.university}</small>
+          </div>
+        ))
       )}
     </>
   )
