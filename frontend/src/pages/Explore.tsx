@@ -196,7 +196,7 @@ export function Explore() {
             <span className="search-icon"><IconSearch size={16} /></span>
             <input
               type="text"
-              placeholder="Buscar posts..."
+              placeholder="Buscar posts...  "
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
