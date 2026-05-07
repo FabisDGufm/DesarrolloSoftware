@@ -37,7 +37,7 @@ export function Explore() {
   const [eventDate, setEventDate] = useState('')
 
   /* =========================
-     LOAD TAB
+     RESET POR TAB
   ========================= */
   useEffect(() => {
     setResults([])
@@ -49,47 +49,28 @@ export function Explore() {
   }, [tab])
 
   /* =========================
-     SEARCH POSTS ONLY
+     SEARCH POSTS
   ========================= */
   useEffect(() => {
     if (tab !== 'posts') return
-
-    if (!query.trim()) {
-      loadAllPosts()
-      return
-    }
 
     const timeout = setTimeout(() => {
       searchPosts()
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [query, tab])
+  }, [query])
 
-  /* =========================
-     POSTS SEARCH (FIX REAL)
-  ========================= */
   const searchPosts = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/explore/search', {
+      const { data } = await api.get('/api/posts/search', {
         params: { q: query }
       })
 
       setResults(Array.isArray(data.data) ? data.data : [])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadAllPosts = async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get('/api/explore/search', {
-        params: { q: '' }
-      })
-
-      setResults(Array.isArray(data.data) ? data.data : [])
+    } catch {
+      setResults([])
     } finally {
       setLoading(false)
     }
@@ -103,6 +84,8 @@ export function Explore() {
     try {
       const { data } = await api.get('/api/news/guatemala')
       setResults(Array.isArray(data.data) ? data.data : [])
+    } catch {
+      setResults([])
     } finally {
       setLoading(false)
     }
@@ -116,14 +99,13 @@ export function Explore() {
     try {
       const { data } = await api.get('/api/announcements')
       setResults(Array.isArray(data.data) ? data.data : [])
+    } catch {
+      setResults([])
     } finally {
       setLoading(false)
     }
   }
 
-  /* =========================
-     CREATE ANNOUNCEMENT
-  ========================= */
   const createAnnouncement = async () => {
     if (!announcementTitle.trim() || !announcementText.trim()) return
 
@@ -162,7 +144,7 @@ export function Explore() {
         {/* SEARCH SOLO POSTS */}
         {tab === 'posts' && (
           <div className="search-bar">
-            <span className="search-icon">🔍</span>
+            <span>🔍</span>
             <input
               type="text"
               placeholder="Buscar posts..."
@@ -173,82 +155,62 @@ export function Explore() {
         )}
 
         <div className="page-tabs">
-          <button className={`page-tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => setTab('posts')}>
+          <button
+            className={tab === 'posts' ? 'active' : ''}
+            onClick={() => setTab('posts')}
+          >
             Posts
           </button>
 
-          <button className={`page-tab ${tab === 'news' ? 'active' : ''}`} onClick={() => setTab('news')}>
+          <button
+            className={tab === 'news' ? 'active' : ''}
+            onClick={() => setTab('news')}
+          >
             Noticias
           </button>
 
-          <button className={`page-tab ${tab === 'announcements' ? 'active' : ''}`} onClick={() => setTab('announcements')}>
+          <button
+            className={tab === 'announcements' ? 'active' : ''}
+            onClick={() => setTab('announcements')}
+          >
             Anuncios
           </button>
         </div>
       </div>
 
-      {/* BOTÓN CREAR */}
+      {/* BOTÓN ANUNCIO */}
       {tab === 'announcements' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 0' }}>
-          <button
-            className="page-tab active"
-            style={{ border: 'none', padding: '8px 14px', borderRadius: '10px' }}
-            onClick={() => setShowModal(true)}
-          >
+          <button onClick={() => setShowModal(true)}>
             + Publicar anuncio
           </button>
         </div>
       )}
 
-      {/* MODAL MEJORADO */}
+      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay">
-          <div
-            className="modal-content"
-            style={{
-              borderRadius: '16px',
-              padding: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}
-          >
+          <div className="modal-content">
+
             <input
-              placeholder="Título del anuncio"
+              placeholder="Título"
               value={announcementTitle}
               onChange={(e) => setAnnouncementTitle(e.target.value)}
-              style={{
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid #ddd'
-              }}
             />
 
             <textarea
-              placeholder="Escribe tu anuncio..."
+              placeholder="Texto del anuncio"
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
-              style={{
-                minHeight: '120px',
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid #ddd',
-                resize: 'none'
-              }}
             />
 
             <input
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              style={{
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid #ddd'
-              }}
             />
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setShowModal(false)}>
                 Cancelar
               </button>
@@ -257,25 +219,25 @@ export function Explore() {
                 Publicar
               </button>
             </div>
+
           </div>
         </div>
       )}
 
       {/* CONTENT */}
       {loading ? (
-        <div className="loading-spinner">
-          <div className="spinner" />
-        </div>
+        <div>Cargando...</div>
       ) : results.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">Sin resultados</div>
-        </div>
+        <div>Sin resultados</div>
       ) : (
         results.map((r) => {
+          /* =========================
+             POSTS
+          ========================= */
           if (isPost(r)) {
             return (
               <PostCard
-                key={`${r.authorId}-${r.postId}`}
+                key={r.postId}
                 authorId={r.authorId}
                 postId={r.postId}
                 authorName={r.authorName}
@@ -286,17 +248,52 @@ export function Explore() {
             )
           }
 
+          /* =========================
+             NEWS (SIN POSTCARD)
+          ========================= */
+          if (tab === 'news') {
+            return (
+              <div
+                key={`news-${r.createdAt}-${r.text}`}
+                className="post-card"
+              >
+                <div className="post-header">
+                  <span className="post-author">
+                    {('authorName' in r && typeof r.authorName === 'string')
+                      ? r.authorName
+                      : 'Noticia'}
+                  </span>
+
+                  <span className="post-time">
+                    {new Date(r.createdAt).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="post-text">{r.text}</div>
+
+                {r.imageUrl && (
+                  <div className="post-image">
+                    <img src={r.imageUrl} alt="" />
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          /* =========================
+             ANNOUNCEMENTS
+          ========================= */
           if (isAnnouncement(r)) {
             return (
-              <div key={r.announcementId} className="post-card">
+              <div
+                key={r.announcementId}
+                className="post-card"
+              >
                 <h3>{r.title}</h3>
                 <p>{r.text}</p>
 
-                {r.eventDate && (
-                  <small>Fecha: {r.eventDate}</small>
-                )}
-
-                <small>Universidad: {r.university}</small>
+                {r.eventDate && <small>{r.eventDate}</small>}
+                <small>{r.university}</small>
               </div>
             )
           }
