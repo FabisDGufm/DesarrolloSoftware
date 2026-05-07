@@ -73,12 +73,13 @@ export function ReportContent() {
               />
             </div>
             <div>
-              <label>Usuario a reportar</label>
+              <label htmlFor="report-username">Nombre de usuario a reportar</label>
               <input
+                id="report-username"
                 type="text"
                 value={reportedUserName}
                 onChange={(e) => setReportedUserName(e.target.value)}
-                placeholder="Nombre como aparece en la red"
+                placeholder="Nombre que aparece en el perfil (no es el correo)"
                 required
                 autoComplete="off"
                 style={{ width: '100%', marginTop: 6, padding: 10 }}

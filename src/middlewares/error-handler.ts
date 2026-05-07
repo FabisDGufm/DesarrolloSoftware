@@ -36,6 +36,22 @@ export const errorHandler = (
         return;
     }
 
+    /** DynamoDB sin tabla (p. ej. ModerationReports no creada). */
+    const awsErr = err as Error & { name?: string };
+    if (
+        awsErr.name === 'ResourceNotFoundException' ||
+        (typeof err.message === 'string' &&
+            err.message.includes('Requested resource not found'))
+    ) {
+        res.status(503).json({
+            status: 'error',
+            statusCode: 503,
+            message:
+                'Falta una tabla en DynamoDB (suele ser ModerationReports). Reiniciá el API para crearla automáticamente o ejecutá: npx tsx src/database/createTables.ts',
+        });
+        return;
+    }
+
     // Error genérico (no controlado)
     const response: ErrorResponse = {
         status: 'error',

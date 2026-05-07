@@ -76,6 +76,14 @@ async function start(): Promise<void> {
     });
 
     const isJest = Boolean(process.env.JEST_WORKER_ID);
+
+    if (!isJest) {
+        const { createDynamoTables } = await import('./database/createTables.js');
+        await createDynamoTables().catch((err) => {
+            console.error('[dynamo] No se pudieron asegurar las tablas:', err);
+        });
+    }
+
     if (isJest) {
         return;
     }
