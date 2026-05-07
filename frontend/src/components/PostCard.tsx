@@ -6,6 +6,7 @@ interface PostCardProps {
   authorId: number
   postId: string
   authorName?: string
+  authorPhoto?: string
   text: string
   imageUrl?: string | null
   createdAt: string
@@ -35,7 +36,17 @@ function timeAgo(dateStr: string): string {
   return d.toLocaleDateString('es-GT', { month: 'short', day: 'numeric' })
 }
 
-function Avatar({ name }: { name?: string }) {
+const S3_BASE = 'https://social-media-ufm-elpasillo.s3.amazonaws.com'
+
+function Avatar({ name, photo }: { name?: string; photo?: string }) {
+  const src = photo ? (photo.startsWith('http') ? photo : `${S3_BASE}/${photo}`) : undefined
+  if (src) {
+    return (
+      <div className="avatar">
+        <img src={src} alt={name || ''} />
+      </div>
+    )
+  }
   const letter = (name || '?')[0]!.toUpperCase()
   return <div className="avatar">{letter}</div>
 }
@@ -44,6 +55,7 @@ export function PostCard({
   authorId,
   postId,
   authorName,
+  authorPhoto,
   text,
   imageUrl,
   createdAt,
@@ -293,7 +305,7 @@ export function PostCard({
 
   return (
     <div className="post-card">
-      <Avatar name={displayName} />
+      <Avatar name={displayName} photo={authorPhoto} />
       <div className="post-body">
         {isRepost && repostedAt && (
           <div

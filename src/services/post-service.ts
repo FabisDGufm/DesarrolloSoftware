@@ -7,20 +7,36 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { PostRepository } from "../repositories/post-repository.js";
 import type { PostInteractionRepository } from "../repositories/post-interaction-repository.js";
+import type { UserRepository } from "../repositories/user-repository.js";
 import { ValidationError, NotFoundError } from "../utils/custom-errors.js";
 import type { Post } from "../models/post.js";
+
+type EnrichedPost = Post & { authorName?: string | undefined; authorPhoto?: string | undefined };
 
 export class PostService {
     private repo: PostRepository;
     private interactions: PostInteractionRepository;
+    private userRepo: UserRepository | undefined;
 
     private s3 = new S3Client({
         region: process.env.AWS_REGION as string
     });
 
-    constructor(repo: PostRepository, interactions: PostInteractionRepository) {
+    constructor(repo: PostRepository, interactions: PostInteractionRepository, userRepo?: UserRepository) {
         this.repo = repo;
         this.interactions = interactions;
+        this.userRepo = userRepo;
+    }
+
+    private async userInfo(posts: Post[]): Promise<EnrichedPost[]> {
+        if (!this.userRepo) return posts;
+        const authorIds = [...new Set(posts.map(p => p.authorId))];
+        const users = await Promise.all(authorIds.map(id => this.userRepo!.findById(id)));
+        const userMap = new Map(users.filter(Boolean).map(u => [u!.id, u!]));
+        return posts.map(p => {
+            const u = userMap.get(p.authorId);
+            return { ...p, authorName: u?.name ?? undefined, authorPhoto: u?.profilePhoto ?? undefined };
+        });
     }
 
     async getUploadUrl(fileName: string) {
@@ -73,7 +89,7 @@ export class PostService {
         return post;
     }
 
-    async getPostsByUser(authorId: number): Promise<Post[]> {
+    async getPostsByUser(authorId: number): Promise<EnrichedPost[]> {
         const own = await this.repo.findByAuthor(authorId);
         const repostRefs =
             await this.interactions.listRepostRefsForUser(authorId);
@@ -108,7 +124,7 @@ export class PostService {
             return tb - ta;
         });
 
-        return merged;
+        return this.userInfo(merged);
     }
 
     async deletePost(authorId: number, postId: string) {
@@ -127,7 +143,7 @@ export class PostService {
     async getSocialFeed(userUniversity?: string) {
         const posts: Post[] = await this.repo.findAll();
 
-        return posts
+        const filtered = posts
             .filter((p: Post) => p.type === "normal" || !p.type)
             .sort((a: Post, b: Post) => {
 
@@ -152,18 +168,21 @@ export class PostService {
                     new Date(a.createdAt).getTime()
                 );
             });
+
+        return this.userInfo(filtered);
     }
 
   
     async getAllPosts() {
-        return this.repo.findAll();
+        const posts = await this.repo.findAll();
+        return this.userInfo(posts);
     }
 
     
     async getNewsFeed(userUniversity?: string) {
         const posts: Post[] = await this.repo.findAll();
 
-        return posts
+        const filtered = posts
             .filter(
                 (p: Post) =>
                     p.type === "news" ||
@@ -207,5 +226,7 @@ export class PostService {
                     new Date(a.createdAt).getTime()
                 );
             });
+
+        return this.userInfo(filtered);
     }
 }

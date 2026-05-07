@@ -38,7 +38,8 @@ export const postInteractionRepository = new PostInteractionRepository();
 
 export const postService = new PostService(
     postRepository,
-    postInteractionRepository
+    postInteractionRepository,
+    userRepository
 );
 export const messageRepository = new MessageRepository();
 export const helpSpaceRepository = new HelpSpaceRepository();

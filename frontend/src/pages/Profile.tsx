@@ -227,6 +227,7 @@ export function Profile() {
             authorName={
               post.isRepost ? `Usuario ${post.authorId}` : displayName
             }
+            authorPhoto={post.isRepost ? undefined : profile.profilePhoto}
             text={post.text}
             imageUrl={post.imageUrl}
             createdAt={post.createdAt}

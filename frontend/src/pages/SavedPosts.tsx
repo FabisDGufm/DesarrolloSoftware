@@ -11,6 +11,7 @@ interface Post {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
+  authorPhoto?: string
 }
 
 export function SavedPosts() {
@@ -71,6 +72,7 @@ export function SavedPosts() {
             authorId={post.authorId}
             postId={post.postId}
             authorName={post.authorName}
+            authorPhoto={post.authorPhoto}
             text={post.text}
             imageUrl={post.imageUrl}
             createdAt={post.createdAt}

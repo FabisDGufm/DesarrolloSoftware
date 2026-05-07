@@ -10,6 +10,7 @@ interface PostItem {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
+  authorPhoto?: string
   type?: 'normal' | 'news' | 'announcement'
   university?: string | null
 }
@@ -274,6 +275,7 @@ export function Explore() {
                 authorId={r.authorId}
                 postId={r.postId}
                 authorName={r.authorName}
+                authorPhoto={r.authorPhoto}
                 text={r.text}
                 imageUrl={r.imageUrl}
                 createdAt={r.createdAt}

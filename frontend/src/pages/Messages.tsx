@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/authStore'
 interface Friend {
   id: number
   name: string
+  profilePhoto?: string
 }
 
 interface Message {
@@ -15,7 +16,17 @@ interface Message {
   createdAt: string
 }
 
-function Avatar({ name, size }: { name?: string; size?: string }) {
+const S3_BASE = 'https://social-media-ufm-elpasillo.s3.amazonaws.com'
+
+function Avatar({ name, photo, size }: { name?: string; photo?: string; size?: string }) {
+  const src = photo ? (photo.startsWith('http') ? photo : `${S3_BASE}/${photo}`) : undefined
+  if (src) {
+    return (
+      <div className={`avatar ${size || ''}`}>
+        <img src={src} alt={name || ''} />
+      </div>
+    )
+  }
   const letter = (name || '?')[0]!.toUpperCase()
   return <div className={`avatar ${size || ''}`}>{letter}</div>
 }
@@ -166,7 +177,7 @@ export function Messages() {
                 className="conversation-item"
                 onClick={() => setSelectedFriend(friend)}
               >
-                <Avatar name={friend.name} size="avatar-lg" />
+                <Avatar name={friend.name} photo={friend.profilePhoto} size="avatar-lg" />
                 <div className="conversation-item-info">
                   <div className="conversation-item-name">{friend.name}</div>
                   <div className="conversation-item-preview">Toca para chatear</div>

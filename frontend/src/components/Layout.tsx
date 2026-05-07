@@ -7,9 +7,26 @@ interface SuggestedUser {
   id: number
   name: string
   university?: string
+  profilePhoto?: string
 }
 
-function Avatar({ name, size }: { name?: string; size?: string }) {
+const S3_BASE = 'https://social-media-ufm-elpasillo.s3.amazonaws.com'
+
+function resolvePhoto(photo?: string): string | undefined {
+  if (!photo) return undefined
+  if (photo.startsWith('http')) return photo
+  return `${S3_BASE}/${photo}`
+}
+
+function Avatar({ name, photo, size }: { name?: string; photo?: string; size?: string }) {
+  const src = resolvePhoto(photo)
+  if (src) {
+    return (
+      <div className={`avatar ${size || ''}`}>
+        <img src={src} alt={name || ''} />
+      </div>
+    )
+  }
   const letter = (name || '?')[0]!.toUpperCase()
   return <div className={`avatar ${size || ''}`}>{letter}</div>
 }
@@ -64,7 +81,7 @@ function ConnectPanel({ currentUserId }: { currentUserId?: number }) {
       </div>
       {displayed.map((u) => (
         <div key={u.id} className="follow-suggestion">
-          <Avatar name={u.name} size="avatar-lg" />
+          <Avatar name={u.name} photo={u.profilePhoto} size="avatar-lg" />
           <div className="follow-suggestion-info">
             <div className="follow-suggestion-name">{u.name}</div>
             <div className="follow-suggestion-handle">{u.university || 'Universidad'}</div>
@@ -194,7 +211,7 @@ export function Layout() {
 
         {isAuthenticated && user ? (
           <div className="sidebar-user" onClick={handleLogout} title="Cerrar sesion">
-            <Avatar name={user.name} />
+            <Avatar name={user.name} photo={user.profilePhoto} />
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{user.name}</div>
               <div className="sidebar-user-handle">Cerrar sesion</div>

@@ -10,6 +10,7 @@ interface Post {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
+  authorPhoto?: string
   university?: string | null
 }
 
@@ -272,6 +273,7 @@ export function Home() {
             authorId={post.authorId}
             postId={post.postId}
             authorName={post.authorName}
+            authorPhoto={post.authorPhoto}
             text={post.text}
             imageUrl={post.imageUrl}
             createdAt={post.createdAt}
