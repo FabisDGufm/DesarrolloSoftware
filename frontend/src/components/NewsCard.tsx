@@ -17,9 +17,9 @@ function timeAgo(dateStr?: string): string {
   const then = new Date(dateStr).getTime()
   const diff = Math.floor((now - then) / 1000)
 
-  if (diff < 60) return `${diff}s`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`
+  if (diff < 60) return `hace ${diff}s`
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`
 
   const d = new Date(dateStr)
   return d.toLocaleDateString('es-GT', {
@@ -43,10 +43,11 @@ export function NewsCard({
 
   return (
     <div className="post-card">
-      {/* HEADER */}
+
+      {/* HEADER (igual estilo PostCard) */}
       <div className="post-header">
         <span className="post-author">
-          📰 {source || 'Noticias'}
+          📰 {source || 'Prensa Libre'}
         </span>
 
         {publishedAt && (
@@ -59,7 +60,7 @@ export function NewsCard({
         )}
       </div>
 
-      {/* TITLE */}
+      {/* TITULO */}
       <div
         style={{
           fontSize: 16,
@@ -71,14 +72,14 @@ export function NewsCard({
         {title}
       </div>
 
-      {/* CONTENT */}
+      {/* CONTENIDO */}
       {content && (
         <div className="post-text">
           {content}
         </div>
       )}
 
-      {/* IMAGE */}
+      {/* IMAGEN */}
       {imageUrl && !imgError && (
         <div className="post-image">
           <img
