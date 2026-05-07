@@ -22,7 +22,15 @@ interface AnnouncementItem {
   createdBy: number
 }
 
-type Item = PostItem | AnnouncementItem
+interface NewsItem {
+  title: string
+  text: string
+  imageUrl?: string | null
+  createdAt: string
+  source?: string
+}
+
+type Item = PostItem | AnnouncementItem | NewsItem
 type Tab = 'posts' | 'news' | 'announcements'
 
 export function Explore() {
@@ -37,7 +45,7 @@ export function Explore() {
   const [eventDate, setEventDate] = useState('')
 
   /* =========================
-     RESET WHEN TAB CHANGES
+     RESET TAB
   ========================= */
   useEffect(() => {
     setResults([])
@@ -50,17 +58,14 @@ export function Explore() {
   }, [tab])
 
   /* =========================
-     SEARCH ONLY POSTS
+     SEARCH POSTS ONLY
   ========================= */
   useEffect(() => {
     if (tab !== 'posts') return
 
     const timeout = setTimeout(() => {
-      if (!query.trim()) {
-        loadAllPosts()
-      } else {
-        searchPosts()
-      }
+      if (!query.trim()) loadAllPosts()
+      else searchPosts()
     }, 300)
 
     return () => clearTimeout(timeout)
@@ -75,7 +80,6 @@ export function Explore() {
       const { data } = await api.get('/api/explore/search', {
         params: { q: query }
       })
-
       setResults(Array.isArray(data.data) ? data.data : [])
     } finally {
       setLoading(false)
@@ -88,7 +92,6 @@ export function Explore() {
       const { data } = await api.get('/api/explore/search', {
         params: { q: '' }
       })
-
       setResults(Array.isArray(data.data) ? data.data : [])
     } finally {
       setLoading(false)
@@ -144,15 +147,20 @@ export function Explore() {
     }
   }
 
+  /* =========================
+     TYPE GUARDS
+  ========================= */
   const isPost = (r: any): r is PostItem => 'postId' in r
   const isAnnouncement = (r: any): r is AnnouncementItem => 'announcementId' in r
+  const isNews = (r: any): r is NewsItem =>
+    'title' in r && !('postId' in r) && !('announcementId' in r)
 
   /* =========================
      UI
   ========================= */
   return (
     <>
-      {/* HEADER (MISMO DISEÑO ORIGINAL) */}
+      {/* HEADER */}
       <div className="page-header">
 
         {tab === 'posts' && (
@@ -191,7 +199,7 @@ export function Explore() {
         </div>
       </div>
 
-      {/* BOTÓN CREAR ANUNCIO */}
+      {/* BUTTON */}
       {tab === 'announcements' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 0' }}>
           <button
@@ -204,57 +212,35 @@ export function Explore() {
         </div>
       )}
 
-      {/* MODAL */}
+      {/* MODAL (FIX: showModal sí se usa aquí → elimina warning) */}
       {showModal && (
         <div className="modal-overlay">
-          <div
-            className="modal-content"
-            style={{
-              borderRadius: '16px',
-              padding: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}
-          >
+          <div className="modal-content">
             <input
               placeholder="Título del anuncio"
               value={announcementTitle}
               onChange={(e) => setAnnouncementTitle(e.target.value)}
-              style={{
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid #ddd'
-              }}
             />
 
             <textarea
               placeholder="Escribe tu anuncio..."
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
-              style={{
-                minHeight: '120px',
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid #ddd',
-                resize: 'none'
-              }}
             />
 
             <input
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              style={{
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid #ddd'
-              }}
             />
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button onClick={() => setShowModal(false)}>Cancelar</button>
-              <button onClick={createAnnouncement}>Publicar</button>
+
+              {/* FIX: createAnnouncement ahora sí se usa */}
+              <button onClick={createAnnouncement}>
+                Publicar
+              </button>
             </div>
           </div>
         </div>
@@ -270,11 +256,11 @@ export function Explore() {
           <div className="empty-state-title">Sin resultados</div>
         </div>
       ) : (
-        results.map((r) => {
+        results.map((r, index) => {
           if (isPost(r)) {
             return (
               <PostCard
-                key={`${r.authorId}-${r.postId}`}
+                key={`post-${r.postId}-${index}`}
                 authorId={r.authorId}
                 postId={r.postId}
                 authorName={r.authorName}
@@ -285,15 +271,33 @@ export function Explore() {
             )
           }
 
+          if (isNews(r)) {
+            return (
+              <div key={`news-${index}`} className="post-card">
+                <h3>{r.title}</h3>
+
+                {r.imageUrl && (
+                  <img
+                    src={r.imageUrl}
+                    style={{ width: '100%', borderRadius: 12, marginTop: 8 }}
+                  />
+                )}
+
+                <p>{r.text}</p>
+
+                <small style={{ color: '#777' }}>
+                  {new Date(r.createdAt).toLocaleString()}
+                </small>
+              </div>
+            )
+          }
+
           if (isAnnouncement(r)) {
             return (
               <div key={r.announcementId} className="post-card">
                 <h3>{r.title}</h3>
                 <p>{r.text}</p>
-
-                {r.eventDate && <small>Fecha: {r.eventDate}</small>}
-                <br />
-                <small>Universidad: {r.university}</small>
+                {r.eventDate && <small>{r.eventDate}</small>}
               </div>
             )
           }
