@@ -9,24 +9,18 @@ interface SearchResult {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
-  type?: 'post' | 'news' | 'external'
 }
 
-const CATEGORIES = [
-  { type: 'trending', label: 'Tendencias', desc: 'Lo mas popular ahora' },
-  { type: 'university', label: 'Universidades', desc: 'Noticias universitarias' },
-  { type: 'tech', label: 'Tecnologia', desc: 'Desarrollo, ciencia e innovacion' },
-  { type: 'sports', label: 'Deportes', desc: 'Deporte universitario' },
-  { type: 'entertainment', label: 'Entretenimiento', desc: 'Cultura, musica y arte' },
-]
+type Tab = 'posts' | 'news' | 'announcements'
 
 export function Explore() {
-  const [tab, setTab] = useState('foryou')
+  const [tab, setTab] = useState<Tab>('posts')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
+  // 🔎 SEARCH (independiente del tab)
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
@@ -41,7 +35,6 @@ export function Explore() {
     return () => clearTimeout(timeout)
   }, [query])
 
-  // 🔍 SEARCH NORMAL
   const handleSearch = async () => {
     if (!query.trim()) return
 
@@ -62,22 +55,34 @@ export function Explore() {
     }
   }
 
-  // 🧭 BROWSE + NEWS INTEGRADO
-  const handleBrowse = async (type: string) => {
+  // 📂 CARGA POR TAB
+  const loadTabContent = async (selectedTab: Tab) => {
     setSearching(true)
-    setHasSearched(true)
-    setQuery('')
+    setHasSearched(false)
+    setResults([])
 
     try {
-      // 📰 NEWS RSS (NUEVO)
-      if (type === 'news') {
-        const { data } = await api.get('/api/news/guatemala')
-        const items = data.data || data
-        setResults(Array.isArray(items) ? items : [])
+      let url = ''
+
+      // 🧱 POSTS (explorar general)
+      if (selectedTab === 'posts') {
+        url = '/api/explore/browse/posts'
+      }
+
+      // 📰 NOTICIAS (RSS PRIMERO / PRIMAFORMA ORIGINAL)
+      if (selectedTab === 'news') {
+        url = '/api/news/feed' // 👈 ESTE ES EL IMPORTANTE (Prensa Libre / RSS)
+      }
+
+      // 📢 ANUNCIOS (vacío por ahora)
+      if (selectedTab === 'announcements') {
+        setResults([])
+        setSearching(false)
         return
       }
 
-      const { data } = await api.get(`/api/explore/browse/${type}`)
+      const { data } = await api.get(url)
+
       const items = data.data || data
       setResults(Array.isArray(items) ? items : [])
     } catch {
@@ -87,15 +92,13 @@ export function Explore() {
     }
   }
 
-  // 📰 AUTO LOAD NEWS TAB
   useEffect(() => {
-    if (tab === 'news') {
-      handleBrowse('news')
-    }
+    loadTabContent(tab)
   }, [tab])
 
   return (
     <>
+      {/* HEADER */}
       <div className="page-header">
         <div style={{ padding: '8px 0' }}>
           <div className="search-bar" style={{ marginBottom: 0 }}>
@@ -110,23 +113,30 @@ export function Explore() {
         </div>
 
         <div className="page-tabs">
-          {['foryou', 'trending', 'news', 'sports', 'entertainment'].map((t) => (
-            <button
-              key={t}
-              className={`page-tab ${tab === t ? 'active' : ''}`}
-              onClick={() => setTab(t)}
-            >
-              {t === 'foryou' && 'Para ti'}
-              {t === 'trending' && 'Tendencias'}
-              {t === 'news' && 'Noticias'}
-              {t === 'sports' && 'Deportes'}
-              {t === 'entertainment' && 'Entretenimiento'}
-            </button>
-          ))}
+          <button
+            className={`page-tab ${tab === 'posts' ? 'active' : ''}`}
+            onClick={() => setTab('posts')}
+          >
+            Posts
+          </button>
+
+          <button
+            className={`page-tab ${tab === 'news' ? 'active' : ''}`}
+            onClick={() => setTab('news')}
+          >
+            Noticias
+          </button>
+
+          <button
+            className={`page-tab ${tab === 'announcements' ? 'active' : ''}`}
+            onClick={() => setTab('announcements')}
+          >
+            Anuncios
+          </button>
         </div>
       </div>
 
-      {/* RESULTS */}
+      {/* CONTENT */}
       {hasSearched ? (
         searching ? (
           <div className="loading-spinner">
@@ -150,19 +160,40 @@ export function Explore() {
             />
           ))
         )
+      ) : searching ? (
+        <div className="loading-spinner">
+          <div className="spinner" />
+        </div>
+      ) : results.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-title">
+            {tab === 'announcements'
+              ? 'Sin anuncios'
+              : tab === 'news'
+              ? 'Cargando noticias...'
+              : 'Sin contenido'}
+          </div>
+
+          <p>
+            {tab === 'announcements'
+              ? 'Aún no hay anuncios disponibles'
+              : tab === 'news'
+              ? 'Cargando noticias desde fuentes externas...'
+              : 'Explora contenido en esta sección'}
+          </p>
+        </div>
       ) : (
-        <>
-          {CATEGORIES.map((cat) => (
-            <div
-              key={cat.type}
-              className="explore-category"
-              onClick={() => handleBrowse(cat.type)}
-            >
-              <div className="explore-category-title">{cat.label}</div>
-              <div className="explore-category-desc">{cat.desc}</div>
-            </div>
-          ))}
-        </>
+        results.map((r) => (
+          <PostCard
+            key={`${r.authorId}-${r.postId}`}
+            authorId={r.authorId}
+            postId={r.postId}
+            authorName={r.authorName}
+            text={r.text}
+            imageUrl={r.imageUrl}
+            createdAt={r.createdAt}
+          />
+        ))
       )}
     </>
   )
