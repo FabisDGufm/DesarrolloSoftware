@@ -16,6 +16,7 @@ import { latencyMiddleware } from "./middlewares/latency-middleware.js";
 import anonDebateRoutes from './routes/anon-debate-routes.js';
 import promotionRoutes from "./routes/promotion-routes.js";
 import newsRoutes from "./routes/news-routes.js";
+import { userService } from "./services/instances.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -69,8 +70,21 @@ app.use('/moderation', moderationRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+async function start(): Promise<void> {
+    await userService.ensureModeratorAccount().catch((err) => {
+        console.error("[moderator] No se pudo asegurar la cuenta moderadora:", err);
+    });
+
+    const isJest = Boolean(process.env.JEST_WORKER_ID);
+    if (isJest) {
+        return;
+    }
+
+    app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
+}
+
+void start();
 
 export default app;

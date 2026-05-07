@@ -68,13 +68,15 @@ export class UserRepository {
         name?: string;
         email: string;
         password: string;
-        university?: string;
+        university?: string | null;
+        role?: number;
     }): Promise<User> {
         const user = await prisma.user.create({
             data: {
                 name: data.name ?? null,
                 email: data.email,
                 university: data.university ?? null,
+                ...(data.role !== undefined ? { role: data.role } : {}),
                 auth: {
                     create: { password: data.password },
                 },
@@ -82,6 +84,21 @@ export class UserRepository {
             include: { auth: true },
         });
         return this.mapUser(user as PrismaUserRow);
+    }
+
+    /** Asegura rol moderador y sin universidad para la cuenta sistema. */
+    async repairBuiltInModeratorAccount(email: string): Promise<void> {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) return;
+        const needsFix = user.role < 1 || user.university !== null;
+        if (!needsFix) return;
+        await prisma.user.update({
+            where: { email },
+            data: {
+                university: null,
+                role: Math.max(user.role, 1),
+            },
+        });
     }
 
     async updateName(id: number, name: string): Promise<User> {

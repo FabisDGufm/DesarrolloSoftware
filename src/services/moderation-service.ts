@@ -19,29 +19,50 @@ export class ModerationService {
 
     async createReport(
         reporterId: number,
-        body: { targetType?: unknown; targetId?: unknown; reason?: unknown }
+        body: {
+            targetType?: unknown;
+            targetId?: unknown;
+            reason?: unknown;
+            /** Para targetType user: nombre visible en perfil (alternativa a targetId numerico). */
+            reportedUserName?: unknown;
+        }
     ) {
         const targetType = body.targetType;
-        const targetId = body.targetId;
+        let targetId =
+            typeof body.targetId === 'string' ? body.targetId.trim() : '';
         const reason = body.reason;
         if (typeof targetType !== 'string' || !TARGET_TYPES.has(targetType as ModerationTargetType)) {
             throw new ValidationError(
                 'targetType invalido (post, user, comment, message, help_message).'
             );
         }
-        if (typeof targetId !== 'string' || !targetId.trim()) {
-            throw new ValidationError('targetId es requerido.');
+        if (targetType === 'user') {
+            const nameRaw = body.reportedUserName;
+            if (typeof nameRaw === 'string' && nameRaw.trim()) {
+                const reported = await this.users.findByName(nameRaw.trim());
+                if (!reported) {
+                    throw new ValidationError(
+                        'No encontramos un usuario con ese nombre. Revisa mayusculas y espacios.'
+                    );
+                }
+                targetId = String(reported.id);
+            }
+        }
+        if (!targetId) {
+            throw new ValidationError('Indica el objetivo del reporte (p. ej. nombre de usuario).');
         }
         if (typeof reason !== 'string' || !reason.trim()) {
             throw new ValidationError('reason es requerido.');
         }
-        if (targetType === 'user' && Number.parseInt(targetId.trim(), 10) === reporterId) {
+        const numericTarget =
+            targetType === 'user' ? Number.parseInt(targetId, 10) : NaN;
+        if (targetType === 'user' && numericTarget === reporterId) {
             throw new ValidationError('No podes reportarte a vos mismo.');
         }
         return this.reports.createReport({
             reporterId,
             targetType: targetType as ModerationTargetType,
-            targetId: targetId.trim(),
+            targetId,
             reason: reason.trim(),
         });
     }

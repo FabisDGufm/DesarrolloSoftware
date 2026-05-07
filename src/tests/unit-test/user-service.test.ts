@@ -25,6 +25,7 @@ describe('UserService', () => {
             findById: jest.fn(),
             updateName: jest.fn(),
             delete: jest.fn(),
+            repairBuiltInModeratorAccount: jest.fn(),
         };
         service = new UserService(repo);
     });
@@ -50,6 +51,44 @@ describe('UserService', () => {
         const result = await service.registerUser({ name: 'John Doe', email: 'john@ufm.edu', password: 'password123', role: 1 });
         expect(result.user.name).toBe('John Doe');
         expect(result.authentication_token).toBeDefined();
+        expect(repo.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                email: 'john@ufm.edu',
+                name: 'John Doe',
+                university: 'Universidad Francisco Marroquín',
+            })
+        );
+    });
+
+    it('should reject built-in moderator email with wrong password', async () => {
+        await expect(
+            service.registerUser({
+                name: 'Mod',
+                email: 'moderador@admin.com',
+                password: 'wrong-pass-here',
+                role: 0,
+            })
+        ).rejects.toThrow('Credenciales de moderador no válidas');
+    });
+
+    it('should register built-in moderator with correct password', async () => {
+        const modUser: User = { ...mockUser, email: 'moderador@admin.com', role: 1 };
+        repo.findByEmail.mockResolvedValue(null);
+        repo.create.mockResolvedValue(modUser);
+        const result = await service.registerUser({
+            name: 'Moderación',
+            email: 'moderador@admin.com',
+            password: 'Password123',
+            role: 0,
+        });
+        expect(result.user.role).toBe(1);
+        expect(repo.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                email: 'moderador@admin.com',
+                university: null,
+                role: 1,
+            })
+        );
     });
 
     it('should get user by id', async () => {
@@ -70,5 +109,13 @@ describe('UserService', () => {
         repo.delete.mockResolvedValue(mockUser);
         const result = await service.deleteUser(1);
         expect(result.message).toBe('User deleted successfully');
+    });
+
+    it('should forbid deleting built-in moderator account', async () => {
+        repo.findById.mockResolvedValue({
+            ...mockUser,
+            email: 'moderador@admin.com',
+        });
+        await expect(service.deleteUser(1)).rejects.toThrow('La cuenta de moderación no puede eliminarse');
     });
 });
