@@ -7,6 +7,15 @@ function param(req: Request, name: string): string {
     return typeof v === 'string' ? v : Array.isArray(v) ? (v[0] ?? '') : '';
 }
 
+/** Evita 500 si req.body es undefined (proxies / clientes sin JSON). */
+function jsonBody(req: Request): Record<string, unknown> {
+    const b = req.body;
+    if (b != null && typeof b === 'object' && !Array.isArray(b)) {
+        return b as Record<string, unknown>;
+    }
+    return {};
+}
+
 export class PostInteractionController {
     constructor(private readonly service: PostInteractionService) {}
 
@@ -21,7 +30,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(200).json({ status: 'success', data });
         } catch (e) {
@@ -40,7 +49,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(200).json({ status: 'success', data });
         } catch (e) {
@@ -78,7 +87,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(201).json({ status: 'success', data });
         } catch (e) {
@@ -116,7 +125,7 @@ export class PostInteractionController {
                 param(req, 'authorId'),
                 param(req, 'postId'),
                 param(req, 'commentId'),
-                req.body
+                jsonBody(req)
             );
             res.status(200).json({ status: 'success', data });
         } catch (e) {
@@ -136,7 +145,7 @@ export class PostInteractionController {
                 param(req, 'authorId'),
                 param(req, 'postId'),
                 param(req, 'commentId'),
-                req.body
+                jsonBody(req)
             );
             res.status(200).json({ status: 'success', data });
         } catch (e) {
@@ -155,7 +164,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(201).json({ status: 'success', data });
         } catch (e) {
@@ -192,7 +201,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(200).json({ status: 'success', data });
         } catch (e) {
@@ -211,7 +220,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(200).json({ status: 'success', data });
         } catch (e) {
@@ -249,7 +258,7 @@ export class PostInteractionController {
                 userId,
                 param(req, 'authorId'),
                 param(req, 'postId'),
-                req.body
+                jsonBody(req)
             );
             res.status(201).json({ status: 'success', data });
         } catch (e) {
