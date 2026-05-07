@@ -22,12 +22,13 @@ interface AnnouncementItem {
   createdBy: number
 }
 
+type Item = PostItem | AnnouncementItem
 type Tab = 'posts' | 'news' | 'announcements'
 
 export function Explore() {
   const [tab, setTab] = useState<Tab>('posts')
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
 
   const [showModal, setShowModal] = useState(false)
@@ -35,27 +36,39 @@ export function Explore() {
   const [announcementText, setAnnouncementText] = useState('')
   const [eventDate, setEventDate] = useState('')
 
-  /* ================= LOAD ================= */
+  /* =========================
+     RESET WHEN TAB CHANGES
+  ========================= */
   useEffect(() => {
     setResults([])
     setQuery('')
     setShowModal(false)
 
+    if (tab === 'posts') loadAllPosts()
     if (tab === 'news') loadNews()
     if (tab === 'announcements') loadAnnouncements()
   }, [tab])
 
-  /* ================= SEARCH POSTS ================= */
+  /* =========================
+     SEARCH ONLY POSTS
+  ========================= */
   useEffect(() => {
     if (tab !== 'posts') return
 
     const timeout = setTimeout(() => {
-      searchPosts()
+      if (!query.trim()) {
+        loadAllPosts()
+      } else {
+        searchPosts()
+      }
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [query])
+  }, [query, tab])
 
+  /* =========================
+     POSTS
+  ========================= */
   const searchPosts = async () => {
     setLoading(true)
     try {
@@ -69,6 +82,22 @@ export function Explore() {
     }
   }
 
+  const loadAllPosts = async () => {
+    setLoading(true)
+    try {
+      const { data } = await api.get('/api/explore/search', {
+        params: { q: '' }
+      })
+
+      setResults(Array.isArray(data.data) ? data.data : [])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /* =========================
+     NEWS
+  ========================= */
   const loadNews = async () => {
     setLoading(true)
     try {
@@ -79,6 +108,9 @@ export function Explore() {
     }
   }
 
+  /* =========================
+     ANNOUNCEMENTS
+  ========================= */
   const loadAnnouncements = async () => {
     setLoading(true)
     try {
@@ -90,7 +122,7 @@ export function Explore() {
   }
 
   const createAnnouncement = async () => {
-    if (!announcementTitle || !announcementText) return
+    if (!announcementTitle.trim() || !announcementText.trim()) return
 
     setLoading(true)
     try {
@@ -112,112 +144,162 @@ export function Explore() {
     }
   }
 
-  /* ================= RENDER ================= */
+  const isPost = (r: any): r is PostItem => 'postId' in r
+  const isAnnouncement = (r: any): r is AnnouncementItem => 'announcementId' in r
+
+  /* =========================
+     UI
+  ========================= */
   return (
     <>
-      {/* HEADER */}
+      {/* HEADER (MISMO DISEÑO ORIGINAL) */}
       <div className="page-header">
 
         {tab === 'posts' && (
           <div className="search-bar">
-            <span>🔍</span>
+            <span className="search-icon">🔍</span>
             <input
+              type="text"
+              placeholder="Buscar posts..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar posts..."
             />
           </div>
         )}
 
         <div className="page-tabs">
-          <button onClick={() => setTab('posts')}>Posts</button>
-          <button onClick={() => setTab('news')}>Noticias</button>
-          <button onClick={() => setTab('announcements')}>Anuncios</button>
+          <button
+            className={`page-tab ${tab === 'posts' ? 'active' : ''}`}
+            onClick={() => setTab('posts')}
+          >
+            Posts
+          </button>
+
+          <button
+            className={`page-tab ${tab === 'news' ? 'active' : ''}`}
+            onClick={() => setTab('news')}
+          >
+            Noticias
+          </button>
+
+          <button
+            className={`page-tab ${tab === 'announcements' ? 'active' : ''}`}
+            onClick={() => setTab('announcements')}
+          >
+            Anuncios
+          </button>
         </div>
       </div>
+
+      {/* BOTÓN CREAR ANUNCIO */}
+      {tab === 'announcements' && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 0' }}>
+          <button
+            className="page-tab active"
+            style={{ border: 'none', padding: '8px 14px', borderRadius: '10px' }}
+            onClick={() => setShowModal(true)}
+          >
+            + Publicar anuncio
+          </button>
+        </div>
+      )}
 
       {/* MODAL */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
-
+          <div
+            className="modal-content"
+            style={{
+              borderRadius: '16px',
+              padding: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}
+          >
             <input
-              placeholder="Título"
+              placeholder="Título del anuncio"
               value={announcementTitle}
               onChange={(e) => setAnnouncementTitle(e.target.value)}
+              style={{
+                padding: '10px',
+                borderRadius: '10px',
+                border: '1px solid #ddd'
+              }}
             />
 
             <textarea
-              placeholder="Texto"
+              placeholder="Escribe tu anuncio..."
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
+              style={{
+                minHeight: '120px',
+                padding: '10px',
+                borderRadius: '10px',
+                border: '1px solid #ddd',
+                resize: 'none'
+              }}
             />
 
             <input
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
+              style={{
+                padding: '10px',
+                borderRadius: '10px',
+                border: '1px solid #ddd'
+              }}
             />
 
-            <button onClick={createAnnouncement}>Publicar</button>
-            <button onClick={() => setShowModal(false)}>Cancelar</button>
-
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowModal(false)}>Cancelar</button>
+              <button onClick={createAnnouncement}>Publicar</button>
+            </div>
           </div>
         </div>
       )}
 
       {/* CONTENT */}
       {loading ? (
-        <div>Cargando...</div>
+        <div className="loading-spinner">
+          <div className="spinner" />
+        </div>
       ) : results.length === 0 ? (
-        <div>Sin resultados</div>
-      ) : tab === 'posts' ? (
-        /* ================= POSTS ================= */
-        results.map((r: PostItem) => (
-          <PostCard
-            key={r.postId}
-            authorId={r.authorId}
-            postId={r.postId}
-            authorName={r.authorName}
-            text={r.text}
-            imageUrl={r.imageUrl}
-            createdAt={r.createdAt}
-          />
-        ))
-      ) : tab === 'news' ? (
-        /* ================= NEWS (SIN POSTCARD) ================= */
-        results.map((r: any) => (
-          <div key={r.createdAt} className="post-card">
-
-            <div className="post-header">
-              <span className="post-author">
-                {typeof r.authorName === 'string' ? r.authorName : 'Noticia'}
-              </span>
-
-              <span className="post-time">
-                {new Date(r.createdAt).toLocaleString()}
-              </span>
-            </div>
-
-            <div className="post-text">{r.text}</div>
-
-            {r.imageUrl && (
-              <div className="post-image">
-                <img src={r.imageUrl} />
-              </div>
-            )}
-          </div>
-        ))
+        <div className="empty-state">
+          <div className="empty-state-title">Sin resultados</div>
+        </div>
       ) : (
-        /* ================= ANNOUNCEMENTS ================= */
-        results.map((r: AnnouncementItem) => (
-          <div key={r.announcementId} className="post-card">
-            <h3>{r.title}</h3>
-            <p>{r.text}</p>
-            {r.eventDate && <small>{r.eventDate}</small>}
-            <small>{r.university}</small>
-          </div>
-        ))
+        results.map((r) => {
+          if (isPost(r)) {
+            return (
+              <PostCard
+                key={`${r.authorId}-${r.postId}`}
+                authorId={r.authorId}
+                postId={r.postId}
+                authorName={r.authorName}
+                text={r.text}
+                imageUrl={r.imageUrl}
+                createdAt={r.createdAt}
+              />
+            )
+          }
+
+          if (isAnnouncement(r)) {
+            return (
+              <div key={r.announcementId} className="post-card">
+                <h3>{r.title}</h3>
+                <p>{r.text}</p>
+
+                {r.eventDate && <small>Fecha: {r.eventDate}</small>}
+                <br />
+                <small>Universidad: {r.university}</small>
+              </div>
+            )
+          }
+
+          return null
+        })
       )}
     </>
   )
