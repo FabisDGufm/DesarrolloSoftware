@@ -1,8 +1,13 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import type { User, CreateUserDTO } from '../models/user.js';
-import { ValidationError, NotFoundError } from '../utils/custom-errors.js';
+import { ValidationError, NotFoundError, ForbiddenError } from '../utils/custom-errors.js';
 import { UserRepository } from '../repositories/user-repository.js';
+import {
+    getModeratorEmail,
+    getModeratorPassword,
+    isBuiltInModeratorEmail,
+} from '../config/moderator-account.js';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -34,9 +39,19 @@ export class UserService {
         this.repo = repo ?? new UserRepository();
     }
 
-    private generateToken(userId: number, email: string): string {
+    private generateToken(user: Pick<User, 'id' | 'email' | 'name' | 'university' | 'role'>): string {
         const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
-        return jwt.sign({ sub: userId, email }, jwtSecretKey, { expiresIn: "3d" });
+        return jwt.sign(
+            {
+                sub: user.id,
+                email: user.email,
+                name: user.name,
+                university: user.university ?? null,
+                role: user.role,
+            },
+            jwtSecretKey,
+            { expiresIn: "3d" }
+        );
     }
 
     private s3 = new S3Client({
@@ -63,25 +78,65 @@ export class UserService {
     async registerUser(data: CreateUserDTO) {
         if (!data.password)
             throw new ValidationError('Password is required');
-        if (data.password.length < this.passwordMinLength)
-            throw new ValidationError(`Password must be at least ${this.passwordMinLength} characters`);
         if (!data.email)
             throw new ValidationError('Email is required');
         if (!EMAIL_REGEX.test(data.email))
             throw new ValidationError('Invalid email format');
 
-        const university = getUniversityFromEmail(data.email);
-        if (!university)
-            throw new ValidationError('Only university email addresses are allowed');
+        const emailNorm = data.email.trim().toLowerCase();
+        const moderatorEmail = getModeratorEmail();
 
-        const existing = await this.repo.findByEmail(data.email);
+        let university: string | null;
+        let role: number | undefined;
+
+        if (emailNorm === moderatorEmail) {
+            if (data.password !== getModeratorPassword()) {
+                throw new ValidationError('Credenciales de moderador no válidas');
+            }
+            university = null;
+            role = 1;
+        } else {
+            if (data.password.length < this.passwordMinLength)
+                throw new ValidationError(`Password must be at least ${this.passwordMinLength} characters`);
+            const uni = getUniversityFromEmail(emailNorm);
+            if (!uni)
+                throw new ValidationError('Only university email addresses are allowed');
+            university = uni;
+        }
+
+        const existing = await this.repo.findByEmail(emailNorm);
         if (existing)
             throw new ValidationError('Email already exists');
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
-        const newUser = await this.repo.create({ ...data, university, password: hashedPassword });
-        const token = this.generateToken(newUser.id, newUser.email);
+        const newUser = await this.repo.create({
+            name: data.name,
+            email: emailNorm,
+            university,
+            password: hashedPassword,
+            ...(role !== undefined ? { role } : {}),
+        });
+        const token = this.generateToken(newUser);
         return { user: newUser, authentication_token: token };
+    }
+
+    /** Crea la cuenta moderadora demo si no existe y corrige rol/universidad si hace falta. */
+    async ensureModeratorAccount(): Promise<void> {
+        const email = getModeratorEmail();
+        const password = getModeratorPassword();
+        const existing = await this.repo.findByEmail(email);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        if (!existing) {
+            await this.repo.create({
+                email,
+                name: 'Moderación',
+                password: hashedPassword,
+                university: null,
+                role: 1,
+            });
+            return;
+        }
+        await this.repo.repairBuiltInModeratorAccount(email);
     }
 
     async getAllUsers(): Promise<User[]> {
@@ -109,12 +164,19 @@ export class UserService {
     }
 
     async updateUserEmail(id: number, newEmail: string): Promise<User> {
-        await this.getUserById(id);
+        const current = await this.getUserById(id);
+        if (isBuiltInModeratorEmail(current.email)) {
+            throw new ForbiddenError('La cuenta de moderación no puede cambiar su correo.');
+        }
         if (!newEmail) throw new ValidationError('Email is required');
-        if (!EMAIL_REGEX.test(newEmail)) throw new ValidationError('Invalid email format');
-        const conflict = await this.repo.findByEmail(newEmail);
+        const newNorm = newEmail.trim().toLowerCase();
+        if (!EMAIL_REGEX.test(newNorm)) throw new ValidationError('Invalid email format');
+        if (isBuiltInModeratorEmail(newNorm)) {
+            throw new ValidationError('Este correo está reservado para la cuenta de moderación.');
+        }
+        const conflict = await this.repo.findByEmail(newNorm);
         if (conflict && conflict.id !== id) throw new ValidationError('Email already exists');
-        const updated = await this.repo.updateEmail(id, newEmail);
+        const updated = await this.repo.updateEmail(id, newNorm);
         if (!updated) throw new NotFoundError(`User with ID ${id} not found`);
         return updated;
     }
@@ -146,6 +208,10 @@ export class UserService {
     }
 
     async deleteUser(id: number) {
+        const user = await this.getUserById(id);
+        if (isBuiltInModeratorEmail(user.email)) {
+            throw new ForbiddenError('La cuenta de moderación no puede eliminarse.');
+        }
         const deletedUser = await this.repo.delete(id);
         if (!deletedUser) throw new NotFoundError(`User with ID ${id} not found`);
         return { message: 'User deleted successfully', deletedUser };
