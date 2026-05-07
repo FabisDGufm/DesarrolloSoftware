@@ -9,12 +9,24 @@ interface Debate {
   createdAt: string
 }
 
+interface Reply {
+  replyId: string
+  debateId: string
+  text: string
+  university: string
+  createdAt: string
+}
+
 export function Debates() {
   const { user, isAuthenticated } = useAuthStore()
   const [debates, setDebates] = useState<Debate[]>([])
   const [loading, setLoading] = useState(true)
   const [composeText, setComposeText] = useState('')
   const [publishing, setPublishing] = useState(false)
+  const [replies, setReplies] = useState<Record<string, Reply[]>>({})
+  const [replyText, setReplyText] = useState<Record<string, string>>({})
+  const [openReply, setOpenReply] = useState<string | null>(null)
+  const [loadingReplies, setLoadingReplies] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     loadDebates()
@@ -26,9 +38,30 @@ export function Debates() {
       const { data } = await api.get('/api/debates')
       setDebates(data.data || [])
     } catch {
-      setDebates([])
-    } finally {
+  setDebates([])
+}    finally {
       setLoading(false)
+    }
+  }
+
+  const loadReplies = async (debateId: string) => {
+    setLoadingReplies(prev => ({ ...prev, [debateId]: true }))
+    try {
+      const { data } = await api.get(`/api/debates/${debateId}/replies`)
+      setReplies(prev => ({ ...prev, [debateId]: data.data || [] }))
+    } catch {
+  setReplies(prev => ({ ...prev, [debateId]: [] }))
+} finally {
+      setLoadingReplies(prev => ({ ...prev, [debateId]: false }))
+    }
+  }
+
+  const toggleReplies = (debateId: string) => {
+    if (openReply === debateId) {
+      setOpenReply(null)
+    } else {
+      setOpenReply(debateId)
+      if (!replies[debateId]) loadReplies(debateId)
     }
   }
 
@@ -46,6 +79,21 @@ export function Debates() {
       console.error(_e)
     } finally {
       setPublishing(false)
+    }
+  }
+
+  const handleReply = async (debateId: string) => {
+    const text = replyText[debateId]?.trim()
+    if (!text) return
+    try {
+      await api.post(`/api/debates/${debateId}/replies`, {
+        text,
+        university: (user as { university?: string })?.university || 'General'
+      })
+      setReplyText(prev => ({ ...prev, [debateId]: '' }))
+      loadReplies(debateId)
+    } catch (_e) {
+      console.error(_e)
     }
   }
 
@@ -74,14 +122,8 @@ export function Debates() {
               disabled={publishing}
             />
             <div className="compose-toolbar">
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {composeText.length}/500
-              </div>
-              <button
-                className="compose-submit"
-                onClick={handlePublish}
-                disabled={publishing || !composeText.trim()}
-              >
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{composeText.length}/500</div>
+              <button className="compose-submit" onClick={handlePublish} disabled={publishing || !composeText.trim()}>
                 {publishing ? 'Publicando...' : 'Publicar'}
               </button>
             </div>
@@ -107,6 +149,48 @@ export function Debates() {
               </div>
             </div>
             <div className="post-content">{debate.text}</div>
+            <div className="post-actions" style={{ marginTop: 8 }}>
+              <button
+                onClick={() => toggleReplies(debate.debateId)}
+                style={{ fontSize: 13, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                💬 {openReply === debate.debateId ? 'Cerrar' : 'Responder'}
+              </button>
+            </div>
+
+            {openReply === debate.debateId && (
+              <div style={{ marginTop: 12, paddingLeft: 16, borderLeft: '2px solid var(--border-color)' }}>
+                {loadingReplies[debate.debateId] ? (
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Cargando...</div>
+                ) : (
+                  (replies[debate.debateId] || []).map(reply => (
+                    <div key={reply.replyId} style={{ marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Anónimo · {formatTime(reply.createdAt)}</span>
+                      <div style={{ fontSize: 14 }}>{reply.text}</div>
+                    </div>
+                  ))
+                )}
+
+                {isAuthenticated && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <input
+                      type="text"
+                      value={replyText[debate.debateId] || ''}
+                      onChange={(e) => setReplyText(prev => ({ ...prev, [debate.debateId]: e.target.value }))}
+                      placeholder="Responde anonimamente..."
+                      style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 13 }}
+                    />
+                    <button
+                      onClick={() => handleReply(debate.debateId)}
+                      className="compose-submit"
+                      style={{ padding: '6px 14px', fontSize: 13 }}
+                    >
+                      Enviar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))
       )}

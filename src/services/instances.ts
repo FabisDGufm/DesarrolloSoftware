@@ -20,6 +20,8 @@ import { PostService } from "./post-service.js";
 import { PostRepository } from "../repositories/post-repository.js";
 import { ModerationRepository } from '../repositories/moderation-repository.js';
 import { ModerationService } from './moderation-service.js';
+import { PromotionRepository } from "../repositories/promotion-repository.js";
+import { PromotionService } from "./promotion-service.js";
 
 export const postService = new PostService(new PostRepository());
 
@@ -46,3 +48,6 @@ export const messageService = new MessageService(messageRepository);
 export const helpSpaceService = new HelpSpaceService(helpSpaceRepository);
 export const moderationService = new ModerationService(moderationRepository, userRepository);
 export const userProfileService = new UserProfileService(userService, relationService);
+
+export const promotionRepository = new PromotionRepository();
+export const promotionService = new PromotionService(promotionRepository);

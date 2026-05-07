@@ -51,6 +51,5 @@ export const corsMiddleware = (
         res.sendStatus(204);
         return;
     }
-
     next();
 };

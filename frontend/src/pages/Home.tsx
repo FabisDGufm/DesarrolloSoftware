@@ -76,7 +76,7 @@ export function Home() {
         })
         imageUrl = key
       }
-      await api.post('/api/posts/', { text: composeText.trim(), imageUrl })
+      await api.post('/api/posts', { text: composeText.trim(), imageUrl })
       setComposeText('')
       removeImage()
       loadFeed()

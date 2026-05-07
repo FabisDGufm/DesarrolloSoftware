@@ -1,11 +1,11 @@
 export interface Promotion {
-    id: string;
+    promotionId: string;
     userId: number;
     title: string;
     description: string;
-    price?: number;
+    price?: number | null;
     contact: string;
     imageUrl?: string | null;
-    university: string;
+    university?: string | null;
     createdAt: string;
 }

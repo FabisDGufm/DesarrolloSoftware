@@ -249,10 +249,10 @@ export function PostCard({
         </div>
         {text && <div className="post-text">{text}</div>}
         {imageUrl && (
-          <div className="post-image">
-            <img src={imageUrl} alt="" />
-          </div>
-        )}
+  <div className="post-image">
+    <img src={imageUrl.startsWith('http') ? imageUrl : `https://social-media-ufm-elpasillo.s3.us-east-1.amazonaws.com/${imageUrl}`} alt="" />
+  </div>
+)}
         <div className="post-actions">
           <button
             type="button"

@@ -1,46 +1,92 @@
-import type { Request, Response, NextFunction } from "express";
+import type {
+    Request,
+    Response,
+    NextFunction
+} from "express";
+
 import type { PromotionService } from "../services/promotion-service.js";
-import type { User } from "../models/user.js";
+
 import { UnauthorizedError } from "../utils/custom-errors.js";
 
-// 🔥 Tipado local para evitar express.d.ts
-interface AuthRequest extends Request {
-    userId?: number;
-    user?: User;
+function param(req: any, name: string): string {
+
+    const v = req.params[name];
+
+    if (typeof v === "string") return v;
+
+    if (Array.isArray(v)) return v[0] ?? "";
+
+    return "";
 }
 
 export class PromotionController {
-    constructor(private service: PromotionService) {}
 
-    create = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    constructor(
+        private readonly service: PromotionService
+    ) {}
+
+    getUploadUrl = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+
         try {
-            const userId = req.userId;
-            const user = req.user;
 
-            if (!userId || !user) {
+            const fileName = req.query.fileName;
+
+            if (typeof fileName !== "string") {
+                throw new Error("fileName is required");
+            }
+
+            const data = await this.service.getUploadUrl(fileName);
+
+            res.status(200).json({
+                status: "success",
+                data
+            });
+
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    createPromotion = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+
+        try {
+
+            const userId = (req as any).userId;
+
+            if (!userId) {
                 throw new UnauthorizedError("Unauthorized");
             }
 
-            
-            if (!user.university) {
-                throw new Error("User university is required");
-            }
-
-            const university = user.university;
-
-            const { title, description, contact, price, imageUrl } = req.body;
-
-            const promotion = await this.service.createPromotion(
-                userId,
-                university,
+            const {
                 title,
                 description,
-                contact,
                 price,
+                contact,
                 imageUrl
-            );
+            } = req.body;
 
-            return res.status(201).json({
+            const user = (req as any).user;
+
+            const promotion =
+                await this.service.createPromotion(
+                    userId,
+                    title,
+                    description,
+                    contact,
+                    user?.university,
+                    price,
+                    imageUrl
+                );
+
+            res.status(201).json({
                 status: "success",
                 data: promotion
             });
@@ -50,11 +96,48 @@ export class PromotionController {
         }
     };
 
-    getAll = async (_req: Request, res: Response, next: NextFunction) => {
-        try {
-            const promotions = await this.service.getAllPromotions();
+    getPromotion = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
 
-            return res.status(200).json({
+        try {
+
+            const userId = Number(param(req, "userId"));
+
+            const promotionId = param(req, "promotionId");
+
+            const promotion =
+                await this.service.getPromotion(
+                    userId,
+                    promotionId
+                );
+
+            res.status(200).json({
+                status: "success",
+                data: promotion
+            });
+
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    getPromotionsByUser = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+
+        try {
+
+            const userId = Number(param(req, "userId"));
+
+            const promotions =
+                await this.service.getPromotionsByUser(userId);
+
+            res.status(200).json({
                 status: "success",
                 data: promotions
             });
@@ -64,22 +147,22 @@ export class PromotionController {
         }
     };
 
-    getMyUniversity = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    getFeed = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+
         try {
-            const user = req.user;
 
-            if (!user) {
-                throw new UnauthorizedError("Unauthorized");
-            }
+            const user = (req as any).user;
 
-            // ✅ FIX aquí también
-            if (!user.university) {
-                throw new Error("User university is required");
-            }
+            const promotions =
+                await this.service.getFeed(
+                    user?.university
+                );
 
-            const promotions = await this.service.getByUniversity(user.university);
-
-            return res.status(200).json({
+            res.status(200).json({
                 status: "success",
                 data: promotions
             });
@@ -89,18 +172,25 @@ export class PromotionController {
         }
     };
 
-    delete = async (req: Request, res: Response, next: NextFunction) => {
+    deletePromotion = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+
         try {
-            const id = req.params.id;
 
-            // ✅ FIX string | string[] | undefined
-            if (!id || Array.isArray(id)) {
-                throw new Error("Invalid id");
-            }
+            const userId = Number(param(req, "userId"));
 
-            const result = await this.service.deletePromotion(id);
+            const promotionId = param(req, "promotionId");
 
-            return res.status(200).json({
+            const result =
+                await this.service.deletePromotion(
+                    userId,
+                    promotionId
+                );
+
+            res.status(200).json({
                 status: "success",
                 data: result
             });
