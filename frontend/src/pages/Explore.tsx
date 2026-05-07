@@ -26,6 +26,7 @@ export function Explore() {
   useEffect(() => {
     setResults([])
     setQuery('')
+    setShowModal(false)
 
     if (tab === 'news') {
       loadNews()
@@ -96,7 +97,7 @@ export function Explore() {
     setLoading(true)
 
     try {
-      const { data } = await api.post('/api/posts', {
+      await api.post('/api/posts', {
         text: announcementText,
         type: 'announcement'
       })
