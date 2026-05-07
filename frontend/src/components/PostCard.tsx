@@ -12,11 +12,9 @@ interface PostCardProps {
   likesCount?: number
   commentsCount?: number
   repostsCount?: number
+  /** Mostrar franja "Republicaste" (ej. en perfil). */
   isRepost?: boolean
   repostedAt?: string
-
-  // 🔥 NUEVO
-  variant?: 'post' | 'news'
 }
 
 interface ApiComment {
@@ -54,30 +52,30 @@ export function PostCard({
   repostsCount = 0,
   isRepost = false,
   repostedAt,
-  variant = 'post' // 🔥 DEFAULT IMPORTANTE
 }: PostCardProps) {
   const { isAuthenticated } = useAuthStore()
-
   const [liked, setLiked] = useState(false)
   const [likes, setLikes] = useState(likesCount)
   const [reposts, setReposts] = useState(repostsCount)
+  const [hint, setHint] = useState<string | null>(null)
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [saved, setSaved] = useState(false)
-
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [comments, setComments] = useState<ApiComment[]>([])
   const [commentDraft, setCommentDraft] = useState('')
   const [loadingComments, setLoadingComments] = useState(false)
   const [commentCount, setCommentCount] = useState(commentsCount)
 
-  const [hint, setHint] = useState<string | null>(null)
-  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const interactionBody = { createdAt }
   const queryCreatedAt = encodeURIComponent(createdAt)
 
-  useEffect(() => setCommentCount(commentsCount), [commentsCount])
-  useEffect(() => setLikes(likesCount), [likesCount])
-  useEffect(() => setReposts(repostsCount), [repostsCount])
+  useEffect(() => {
+    setCommentCount(commentsCount)
+  }, [commentsCount])
+
+  useEffect(() => {
+    setReposts(repostsCount)
+  }, [repostsCount])
 
   useEffect(() => {
     return () => {
@@ -88,8 +86,56 @@ export function PostCard({
   const showHint = (msg: string) => {
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     setHint(msg)
-    hintTimerRef.current = setTimeout(() => setHint(null), 2500)
+    hintTimerRef.current = setTimeout(() => setHint(null), 2800)
   }
+
+  useEffect(() => {
+    let cancelled = false
+    const base = `/api/interactions/posts/${authorId}/${postId}`
+
+    const load = async () => {
+      try {
+        const [likesRes, savesRes] = await Promise.allSettled([
+          api.get(`${base}/likes?createdAt=${queryCreatedAt}`),
+          isAuthenticated
+            ? api.get(`${base}/saves?createdAt=${queryCreatedAt}`)
+            : Promise.resolve(null),
+        ])
+        if (cancelled) return
+        if (likesRes.status === 'fulfilled') {
+          const raw = likesRes.value.data
+          const d = raw?.data ?? raw
+          if (d && typeof d === 'object') {
+            setLiked(Boolean((d as { likedByMe?: boolean }).likedByMe))
+            const c = (d as { count?: number }).count
+            setLikes((prev) => (typeof c === 'number' ? c : prev))
+          }
+        }
+        if (
+          isAuthenticated &&
+          savesRes.status === 'fulfilled' &&
+          savesRes.value
+        ) {
+          const raw = savesRes.value.data
+          const d = raw?.data ?? raw
+          if (d && typeof d === 'object') {
+            setSaved(Boolean((d as { savedByMe?: boolean }).savedByMe))
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [authorId, postId, queryCreatedAt, isAuthenticated])
+
+  useEffect(() => {
+    setLikes(likesCount)
+  }, [likesCount])
 
   const loadComments = async () => {
     setLoadingComments(true)
@@ -97,11 +143,19 @@ export function PostCard({
       const { data } = await api.get(
         `/api/interactions/posts/${authorId}/${postId}/comments?createdAt=${queryCreatedAt}`
       )
-
       const raw = data.data ?? data
       const list = Array.isArray(raw) ? raw : []
-
-      setComments(list)
+      setComments(
+        list.map((c: Record<string, unknown>) => ({
+          id: String(c.id ?? ''),
+          userId: Number(c.userId),
+          text: String(c.text ?? ''),
+          createdAt:
+            typeof c.createdAt === 'string'
+              ? c.createdAt
+              : String(c.createdAt ?? ''),
+        }))
+      )
       setCommentCount(list.length)
     } catch {
       setComments([])
@@ -113,7 +167,6 @@ export function PostCard({
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!isAuthenticated) return
-
     try {
       if (liked) {
         await api.delete(
@@ -128,31 +181,15 @@ export function PostCard({
         )
         setLikes((l) => l + 1)
       }
-
       setLiked(!liked)
-    } catch {}
-  }
-
-  const handleRepost = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!isAuthenticated) return
-
-    try {
-      await api.post(
-        `/api/interactions/posts/${authorId}/${postId}/repost`,
-        interactionBody
-      )
-      setReposts((n) => n + 1)
-      showHint('Republicado')
     } catch {
-      showHint('Error al republicar')
+      /* ignore */
     }
   }
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!isAuthenticated) return
-
     try {
       if (saved) {
         await api.delete(
@@ -165,9 +202,65 @@ export function PostCard({
           interactionBody
         )
       }
-
       setSaved(!saved)
-    } catch {}
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const handleRepost = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isAuthenticated) return
+    try {
+      await api.post(
+        `/api/interactions/posts/${authorId}/${postId}/repost`,
+        interactionBody
+      )
+      setReposts((n) => n + 1)
+      showHint('Republicacion registrada')
+    } catch {
+      showHint('No se pudo republicar')
+    }
+  }
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isAuthenticated) return
+    try {
+      await api.post(
+        `/api/interactions/posts/${authorId}/${postId}/share`,
+        interactionBody
+      )
+      const snippet =
+        text.trim().slice(0, 200) || 'Mira esto en El Pasillo'
+      const origin = window.location.origin
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: 'El Pasillo',
+            text: snippet,
+            url: origin,
+          })
+          showHint('Compartido')
+          return
+        } catch (err: unknown) {
+          if (
+            err instanceof DOMException &&
+            err.name === 'AbortError'
+          ) {
+            return
+          }
+        }
+      }
+      if (typeof navigator.clipboard?.writeText === 'function') {
+        await navigator.clipboard.writeText(`${snippet}\n${origin}`)
+        showHint('Copiado al portapapeles')
+      } else {
+        showHint('Compartido')
+      }
+    } catch {
+      showHint('No se pudo compartir')
+    }
   }
 
   const toggleComments = async (e: React.MouseEvent) => {
@@ -184,16 +277,16 @@ export function PostCard({
     e.preventDefault()
     e.stopPropagation()
     if (!isAuthenticated || !commentDraft.trim()) return
-
     try {
       await api.post(
         `/api/interactions/posts/${authorId}/${postId}/comments`,
-        { createdAt, text: commentDraft }
+        { createdAt, text: commentDraft.trim() }
       )
-
       setCommentDraft('')
       await loadComments()
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   }
 
   const displayName = authorName || `Usuario ${authorId}`
@@ -201,79 +294,156 @@ export function PostCard({
   return (
     <div className="post-card">
       <Avatar name={displayName} />
-
       <div className="post-body">
         {isRepost && repostedAt && (
-          <div style={{ fontSize: 12, marginBottom: 8 }}>
-            Republicado · {timeAgo(repostedAt)}
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--repost)',
+              marginBottom: 8,
+              letterSpacing: '0.02em',
+            }}
+          >
+            &#8634; Republicaste · {timeAgo(repostedAt)}
           </div>
         )}
-
         <div className="post-header">
           <span className="post-author">{displayName}</span>
+          <span className="post-dot">·</span>
           <span className="post-time">{timeAgo(createdAt)}</span>
         </div>
-
         {text && <div className="post-text">{text}</div>}
-
         {imageUrl && (
-          <div className="post-image">
-            <img src={imageUrl} alt="" />
-          </div>
-        )}
-
-        {/* 🔥 SOLO POSTS TIENEN ACCIONES */}
-        {variant === 'post' && (
-          <div className="post-actions">
-            <button onClick={toggleComments}>
-              💬 {commentCount}
-            </button>
-
-            <button onClick={handleRepost}>
-              🔁 {reposts}
-            </button>
-
-            <button onClick={handleLike}>
-              {liked ? '❤️' : '🤍'} {likes}
-            </button>
-
-            <button onClick={handleSave}>
-              ⭐
-            </button>
-
-            <button>
-              ↗
-            </button>
-          </div>
-        )}
+  <div className="post-image">
+    <img src={imageUrl.startsWith('http') ? imageUrl : `https://social-media-ufm-elpasillo.s3.us-east-1.amazonaws.com/${imageUrl}`} alt="" />
+  </div>
+)}
+        <div className="post-actions">
+          <button
+            type="button"
+            className="post-action comment"
+            data-tooltip="Comentar"
+            aria-label="Comentar"
+            onClick={toggleComments}
+          >
+            <span className="action-icon">&#128172;</span>
+            {commentCount > 0 && <span>{commentCount}</span>}
+          </button>
+          <button
+            type="button"
+            className="post-action repost"
+            data-tooltip="Republicar"
+            aria-label="Republicar"
+            onClick={handleRepost}
+          >
+            <span className="action-icon">&#8634;</span>
+            {reposts > 0 && <span>{reposts}</span>}
+          </button>
+          <button
+            type="button"
+            className={`post-action like ${liked ? 'active' : ''}`}
+            data-tooltip={liked ? 'Quitar me gusta' : 'Me gusta'}
+            aria-label={liked ? 'Quitar me gusta' : 'Me gusta'}
+            onClick={handleLike}
+          >
+            <span className="action-icon">{liked ? '\u2665' : '\u2661'}</span>
+            {likes > 0 && <span>{likes}</span>}
+          </button>
+          <button
+            type="button"
+            className={`post-action save ${saved ? 'active' : ''}`}
+            data-tooltip={saved ? 'Quitar de guardados' : 'Guardar'}
+            aria-label={saved ? 'Quitar de guardados' : 'Guardar'}
+            onClick={handleSave}
+          >
+            <span className="action-icon">{saved ? '\u2605' : '\u2606'}</span>
+          </button>
+          <button
+            type="button"
+            className="post-action share"
+            data-tooltip="Compartir"
+            aria-label="Compartir"
+            onClick={handleShare}
+          >
+            <span className="action-icon">&#8599;</span>
+          </button>
+        </div>
 
         {hint && (
-          <div style={{ fontSize: 12, marginTop: 8 }}>
+          <div
+            role="status"
+            style={{
+              fontSize: 12,
+              color: 'var(--accent)',
+              marginTop: 8,
+            }}
+          >
             {hint}
           </div>
         )}
 
         {commentsOpen && (
-          <div style={{ marginTop: 12 }}>
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: '1px solid var(--border-color)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {loadingComments ? (
-              <div>Cargando comentarios...</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Cargando comentarios...
+              </div>
+            ) : comments.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Sin comentarios aun.
+              </div>
             ) : (
-              comments.map((c) => (
-                <div key={c.id}>
-                  <strong>Usuario {c.userId}</strong>: {c.text}
-                </div>
-              ))
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 12px' }}>
+                {comments.map((c) => (
+                  <li
+                    key={c.id}
+                    style={{
+                      fontSize: 13,
+                      marginBottom: 8,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong style={{ color: 'var(--text-secondary)' }}>
+                      Usuario {c.userId}
+                    </strong>
+                    : {c.text}
+                  </li>
+                ))}
+              </ul>
             )}
-
-            {isAuthenticated && (
-              <form onSubmit={submitComment}>
+            {isAuthenticated ? (
+              <form onSubmit={submitComment} style={{ display: 'flex', gap: 8 }}>
                 <input
+                  type="text"
                   value={commentDraft}
                   onChange={(e) => setCommentDraft(e.target.value)}
                   placeholder="Escribe un comentario..."
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: 'var(--r-sm)',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: 14,
+                  }}
                 />
-                <button type="submit">Enviar</button>
+                <button type="submit" className="compose-submit" disabled={!commentDraft.trim()}>
+                  Enviar
+                </button>
               </form>
+            ) : (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Inicia sesion para comentar.
+              </div>
             )}
           </div>
         )}
