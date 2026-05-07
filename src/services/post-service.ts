@@ -40,7 +40,6 @@ export class PostService {
         return { url, key };
     }
 
-    // 🔥 ACTUALIZADO
     async createPost(
         authorId: number,
         text: string,
@@ -55,7 +54,7 @@ export class PostService {
             imageUrl: imageUrl ?? null,
             createdAt: new Date().toISOString(),
             type,
-            university: userUniversity ?? null,
+            university: userUniversity ?? null
         };
 
         return this.repo.create(post);
@@ -63,7 +62,11 @@ export class PostService {
 
     async getPost(authorId: number, postId: string) {
         const post = await this.repo.findById(authorId, postId);
-        if (!post) throw new NotFoundError("Post not found");
+
+        if (!post) {
+            throw new NotFoundError("Post not found");
+        }
+
         return post;
     }
 
@@ -73,44 +76,99 @@ export class PostService {
 
     async deletePost(authorId: number, postId: string) {
         const deleted = await this.repo.delete(authorId, postId);
-        if (!deleted) throw new NotFoundError("Post not found");
 
-        return { message: "Post deleted" };
+        if (!deleted) {
+            throw new NotFoundError("Post not found");
+        }
+
+        return {
+            message: "Post deleted"
+        };
     }
 
-    /** Normal posts for home timeline (UUID postIds; works with interactions). */
-    async getSocialFeed(): Promise<Post[]> {
+    // 🔥 FEED NORMAL
+    async getSocialFeed(userUniversity?: string) {
         const posts: Post[] = await this.repo.findAll();
+
         return posts
-            .filter((p: Post) => p.type === undefined || p.type === "normal")
-            .sort(
-                (a: Post, b: Post) =>
+            .filter((p: Post) => p.type === "normal" || !p.type)
+            .sort((a: Post, b: Post) => {
+
+                // misma universidad primero
+                if (
+                    a.university === userUniversity &&
+                    b.university !== userUniversity
+                ) {
+                    return -1;
+                }
+
+                if (
+                    b.university === userUniversity &&
+                    a.university !== userUniversity
+                ) {
+                    return 1;
+                }
+
+                // mas reciente
+                return (
                     new Date(b.createdAt).getTime() -
                     new Date(a.createdAt).getTime()
-            );
+                );
+            });
     }
 
-    // 🚀 NUEVO: noticias/anuncios
+    // 🔥 TODOS LOS POSTS
     async getAllPosts() {
         return this.repo.findAll();
     }
 
+    // 🔥 NEWS / ANNOUNCEMENTS
     async getNewsFeed(userUniversity?: string) {
         const posts: Post[] = await this.repo.findAll();
 
         return posts
-            .filter((p: Post) => p.type === "news" || p.type === "announcement")
+            .filter(
+                (p: Post) =>
+                    p.type === "news" ||
+                    p.type === "announcement"
+            )
             .sort((a: Post, b: Post) => {
-                // 1. misma universidad primero
-                if (a.university === userUniversity && b.university !== userUniversity) return -1;
-                if (b.university === userUniversity && a.university !== userUniversity) return 1;
 
-                // 2. anuncios primero
-                if (a.type === "announcement" && b.type !== "announcement") return -1;
-                if (b.type === "announcement" && a.type !== "announcement") return 1;
+                // misma universidad primero
+                if (
+                    a.university === userUniversity &&
+                    b.university !== userUniversity
+                ) {
+                    return -1;
+                }
 
-                // 3. más reciente
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                if (
+                    b.university === userUniversity &&
+                    a.university !== userUniversity
+                ) {
+                    return 1;
+                }
+
+                // anuncios primero
+                if (
+                    a.type === "announcement" &&
+                    b.type !== "announcement"
+                ) {
+                    return -1;
+                }
+
+                if (
+                    b.type === "announcement" &&
+                    a.type !== "announcement"
+                ) {
+                    return 1;
+                }
+
+                // mas reciente
+                return (
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                );
             });
     }
 }
