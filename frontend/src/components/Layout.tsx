@@ -228,11 +228,11 @@ export function Layout() {
   </div>
   <div className="trending-item" onClick={() => navigate('/explore')} style={{ cursor: 'pointer' }}>
     <div className="trending-item-category">Explorar</div>
-    <div className="trending-item-name">Tendencias</div>
+    <div className="trending-item-name">Posts</div>
   </div>
   <div className="trending-item" onClick={() => navigate('/explore')} style={{ cursor: 'pointer' }}>
     <div className="trending-item-category">Explorar</div>
-    <div className="trending-item-name">Universidades</div>
+    <div className="trending-item-name">Noticias</div>
   </div>
 </div>
 
