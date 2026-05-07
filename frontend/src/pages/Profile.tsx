@@ -20,6 +20,8 @@ interface Post {
   text: string
   imageUrl?: string | null
   createdAt: string
+  isRepost?: boolean
+  repostedAt?: string
 }
 
 export function Profile() {
@@ -201,13 +203,17 @@ export function Profile() {
       ) : (
         posts.map((post) => (
           <PostCard
-            key={`${post.authorId}-${post.postId}`}
+            key={`${post.authorId}-${post.postId}-${post.isRepost ? post.repostedAt ?? 'r' : 'own'}`}
             authorId={post.authorId}
             postId={post.postId}
-            authorName={displayName}
+            authorName={
+              post.isRepost ? `Usuario ${post.authorId}` : displayName
+            }
             text={post.text}
             imageUrl={post.imageUrl}
             createdAt={post.createdAt}
+            isRepost={post.isRepost}
+            repostedAt={post.repostedAt}
           />
         ))
       )}

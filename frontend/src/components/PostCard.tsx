@@ -12,6 +12,9 @@ interface PostCardProps {
   likesCount?: number
   commentsCount?: number
   repostsCount?: number
+  /** Mostrar franja "Republicaste" (ej. en perfil). */
+  isRepost?: boolean
+  repostedAt?: string
 }
 
 interface ApiComment {
@@ -47,6 +50,8 @@ export function PostCard({
   likesCount = 0,
   commentsCount = 0,
   repostsCount = 0,
+  isRepost = false,
+  repostedAt,
 }: PostCardProps) {
   const { isAuthenticated } = useAuthStore()
   const [liked, setLiked] = useState(false)
@@ -290,6 +295,19 @@ export function PostCard({
     <div className="post-card">
       <Avatar name={displayName} />
       <div className="post-body">
+        {isRepost && repostedAt && (
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--repost)',
+              marginBottom: 8,
+              letterSpacing: '0.02em',
+            }}
+          >
+            &#8634; Republicaste · {timeAgo(repostedAt)}
+          </div>
+        )}
         <div className="post-header">
           <span className="post-author">{displayName}</span>
           <span className="post-dot">·</span>
