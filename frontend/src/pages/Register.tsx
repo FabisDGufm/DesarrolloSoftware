@@ -43,7 +43,7 @@ export function Register() {
       <div className="auth-card">
         <div className="auth-logo">El Pasillo</div>
         <h1 className="auth-title">Crea tu cuenta</h1>
-        <p className="auth-subtitle">Unete a la comunidad universitaria</p>
+        <p className="auth-subtitle">Únete a la comunidad universitaria</p>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -59,7 +59,7 @@ export function Register() {
             />
           </div>
           <div className="form-group">
-            <label>Correo electronico</label>
+            <label>Correo electrónico</label>
             <input
               type="email"
               value={email}
@@ -69,12 +69,12 @@ export function Register() {
             />
           </div>
           <div className="form-group">
-            <label>Contrasena</label>
+            <label>Contraseña</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Crea una contrasena"
+              placeholder="Crea una contraseña"
               required
               minLength={6}
             />
@@ -85,7 +85,7 @@ export function Register() {
         </form>
 
         <div className="auth-footer">
-          Ya tienes cuenta? <Link to="/login">Inicia sesion</Link>
+          Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
         </div>
       </div>
     </div>

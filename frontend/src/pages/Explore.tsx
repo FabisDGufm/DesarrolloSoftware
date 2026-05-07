@@ -270,7 +270,7 @@ export function Explore() {
                 />
               </div>
               <div className="form-group">
-                <label>Descripcion</label>
+                <label>Descripción</label>
                 <textarea
                   placeholder="Escribe tu anuncio..."
                   value={announcementText}

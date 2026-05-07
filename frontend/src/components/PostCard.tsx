@@ -244,7 +244,7 @@ export function PostCard({
         interactionBody
       )
       setReposts((n) => n + 1)
-      showHint('Republicacion registrada')
+      showHint('Republicación registrada')
     } catch {
       showHint('No se pudo republicar')
     }
@@ -462,7 +462,7 @@ export function PostCard({
               </div>
             ) : comments.length === 0 ? (
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                Sin comentarios aun.
+                Sin comentarios aún.
               </div>
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 12px' }}>
@@ -506,7 +506,7 @@ export function PostCard({
               </form>
             ) : (
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                Inicia sesion para comentar.
+                Inicia sesión para comentar.
               </div>
             )}
           </div>

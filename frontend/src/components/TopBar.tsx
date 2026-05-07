@@ -85,7 +85,7 @@ export function TopBar() {
                 </button>
                 <div className="top-bar-dropdown-divider" />
                 <button className="top-bar-dropdown-item danger" onClick={handleLogout}>
-                  Cerrar sesion
+                  Cerrar sesión
                 </button>
               </div>
             )}
@@ -96,7 +96,7 @@ export function TopBar() {
             onClick={() => navigate('/login')}
             style={{ background: 'var(--primary)', color: 'var(--text-on-primary)' }}
           >
-            Iniciar sesion
+            Iniciar sesión
           </button>
         )}
       </div>

@@ -217,7 +217,7 @@ export function Home() {
             <textarea
               value={composeText}
               onChange={(e) => setComposeText(e.target.value)}
-              placeholder="Que esta pasando en el pasillo?"
+              placeholder="¿Qué está pasando en el pasillo?"
               disabled={publishing}
             />
 
@@ -270,15 +270,15 @@ export function Home() {
         tab === 'following' ? (
           <EmptyState
             icon={<IconUsers size={48} />}
-            title="Agrega amigos para ver sus posts"
-            description="Seguí algunas personas y sus publicaciones apareceran aca."
+            title="Agrega a amigos para ver sus posts"
+            description="Sigue algunas personas y sus publicaciones aparecerán aquí."
             action={{ label: 'Explorar comunidades', onClick: () => navigate('/comunidades') }}
           />
         ) : (
           <EmptyState
             icon={<IconHome size={48} />}
-            title="El pasillo esta tranquilo"
-            description="Seguí algunas comunidades o publica lo primero que se te ocurra."
+            title="El pasillo está tranquilo"
+            description="Sigue algunas comunidades o publica lo primero que se te ocurra."
             action={{ label: 'Explorar comunidades', onClick: () => navigate('/comunidades') }}
           />
         )

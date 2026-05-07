@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router-dom'
 
 const communities = [
   {
-    title: 'Ayuda academica',
-    description: 'Pedi ayuda o ayuda a otros en General, Matematicas, Programacion y Redaccion.',
+    title: 'Ayuda académica',
+    description: 'Pide ayuda o ayuda a otros en General, Matemáticas, Programación y Redacción.',
     icon: '\u270E',
     path: '/ayuda',
   },
@@ -15,7 +15,7 @@ const communities = [
   },
   {
     title: 'Emprendimientos',
-    description: 'Descubri y promociona negocios creados por estudiantes.',
+    description: 'Descubre y promociona negocios creados por estudiantes.',
     icon: '\uD83D\uDECD',
     path: '/promotions',
   },

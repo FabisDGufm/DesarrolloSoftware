@@ -123,7 +123,7 @@ export function ModerationPanel() {
           <div className="page-title">Moderacion</div>
         </div>
         <div className="empty-state">
-          <p>Inicia sesion.</p>
+          <p>Inicia sesión.</p>
           <button type="button" className="btn-primary" onClick={() => navigate('/login')}>
             Login
           </button>
@@ -139,7 +139,7 @@ export function ModerationPanel() {
           <div className="page-title">Moderacion</div>
         </div>
         <div className="empty-state">
-          <p>No tenes permisos de moderador. Un admin debe asignar `role` en la base (1 = moderador, 2 = admin).</p>
+          <p>No tienes permisos de moderador. Un admin debe asignar `role` en la base (1 = moderador, 2 = admin).</p>
         </div>
       </>
     )

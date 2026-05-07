@@ -49,7 +49,7 @@ export function ReportContent() {
 
       {!isAuthenticated ? (
         <div className="empty-state">
-          <p>Inicia sesion para enviar un reporte.</p>
+          <p>Inicia sesión para enviar un reporte.</p>
           <button type="button" className="btn-primary" onClick={() => navigate('/login')}>
             Ir a login
           </button>
@@ -92,7 +92,7 @@ export function ReportContent() {
                 onChange={(e) => setRazon(e.target.value)}
                 rows={4}
                 required
-                placeholder="Contá qué pasó con el detalle que puedas."
+                placeholder="Cuéntanos qué pasó con el detalle que puedas."
                 style={{ width: '100%', marginTop: 6, padding: 10 }}
               />
             </div>

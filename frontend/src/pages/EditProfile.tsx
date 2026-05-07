@@ -115,7 +115,7 @@ export function EditProfile() {
           marginBottom: 32,
         }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Informacion
+            Información
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
@@ -150,7 +150,7 @@ export function EditProfile() {
               borderRadius: 'var(--r-md)',
               padding: 16,
             }}>
-              <div style={{ fontSize: 14, marginBottom: 12 }}>Seguro que queres cerrar sesion?</div>
+              <div style={{ fontSize: 14, marginBottom: 12 }}>¿Quieres cerrar sesión?</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={handleLogout}
@@ -165,7 +165,7 @@ export function EditProfile() {
                     cursor: 'pointer',
                   }}
                 >
-                  Si, cerrar sesion
+                  Si, cerrar sesión
                 </button>
                 <button
                   onClick={() => setShowConfirm(false)}
@@ -205,7 +205,7 @@ export function EditProfile() {
                 e.currentTarget.style.background = 'transparent'
               }}
             >
-              Cerrar sesion
+              Cerrar sesión
             </button>
           )}
         </div>

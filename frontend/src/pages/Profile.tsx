@@ -216,7 +216,7 @@ export function Profile() {
       {posts.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-title">Sin posts</div>
-          <p>{isOwnProfile ? 'Aun no has publicado nada' : 'Este usuario no tiene posts'}</p>
+          <p>{isOwnProfile ? 'Aún no has publicado nada' : 'Este usuario no tiene posts'}</p>
         </div>
       ) : (
         posts.map((post) => (

@@ -51,7 +51,7 @@ export function SavedPosts() {
 
       {!isAuthenticated ? (
         <div className="empty-state">
-          <div className="empty-state-title">Inicia sesion</div>
+          <div className="empty-state-title">Inicia sesión</div>
           <p>Aqui aparecen los posts que marcaste con la estrella.</p>
           <button type="button" className="btn-primary" onClick={() => navigate('/login')}>
             Ir a login
@@ -64,8 +64,8 @@ export function SavedPosts() {
       ) : posts.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center' }}>
           <div style={{ marginBottom: 16, color: 'var(--text-tertiary)' }}><IconStar size={48} /></div>
-          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Aun no guardas nada</div>
-          <div style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.5 }}>Cuando veas un post que quieras volver a leer, toca la estrella y aparecera aca.</div>
+          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Aún no guardas nada</div>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.5 }}>Cuando veas un post que quieras volver a leer, toca la estrella y aparecerá aquí.</div>
         </div>
       ) : (
         posts.map((post) => (

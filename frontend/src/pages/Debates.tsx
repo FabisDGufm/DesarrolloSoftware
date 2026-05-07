@@ -136,8 +136,8 @@ export function Debates() {
         <div className="loading-spinner"><div className="spinner" /></div>
       ) : debates.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">Sin debates aun</div>
-          <p>Se el primero en publicar algo en Sin Filtro.</p>
+          <div className="empty-state-title">Sin debates aún</div>
+          <p>Sé el primero en publicar algo en Sin Filtro.</p>
         </div>
       ) : (
         debates.map((debate) => (

@@ -150,14 +150,14 @@ export function AcademicHelp() {
               {selected.title}
             </div>
           ) : (
-            'Ayuda academica'
+            'Ayuda académica'
           )}
         </div>
       </div>
 
       {!selected && !loadingSpaces && spaces.length > 0 ? (
         <p style={{ padding: '0 16px 12px', margin: 0, fontSize: 14, color: 'var(--text-muted)' }}>
-          Elegi un espacio para abrir el chat de ese tema.
+          Elige un espacio para abrir el chat de ese tema.
         </p>
       ) : null}
 
@@ -203,7 +203,7 @@ export function AcademicHelp() {
               <div className="loading-spinner" style={{ padding: 24 }}><div className="spinner" /></div>
             ) : messages.length === 0 ? (
               <div className="empty-state">
-                <p>Sin mensajes aun. {user ? 'Se el primero en pedir ayuda.' : 'Inicia sesion para escribir.'}</p>
+                <p>Sin mensajes aún. {user ? 'Sé el primero en pedir ayuda.' : 'Inicia sesión para escribir.'}</p>
               </div>
             ) : (
               messages.map((msg) => (
@@ -232,7 +232,7 @@ export function AcademicHelp() {
               </>
             ) : (
               <p style={{ margin: 0, padding: '12px 16px', color: 'var(--text-muted)' }}>
-                Inicia sesion para publicar en este espacio.
+                Inicia sesión para publicar en este espacio.
               </p>
             )}
           </div>

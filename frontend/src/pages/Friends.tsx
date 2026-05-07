@@ -176,7 +176,7 @@ api.get(`/api/user-relations/${Number(user?.id)}/friend-requests/sent`),
         <div>
           {friends.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-title">Sin amigos aun</div>
+              <div className="empty-state-title">Sin amigos aún</div>
               <p>Agrega amigos desde Descubrir.</p>
             </div>
           ) : (

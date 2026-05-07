@@ -124,8 +124,8 @@ export function Messages() {
           <div className="page-title">Mensajes</div>
         </div>
         <div className="empty-state">
-          <div className="empty-state-title">Inicia sesion</div>
-          <p>Necesitas iniciar sesion para ver tus mensajes</p>
+          <div className="empty-state-title">Inicia sesión</div>
+          <p>Necesitas iniciar sesión para ver tus mensajes</p>
         </div>
       </>
     )
@@ -168,7 +168,7 @@ export function Messages() {
         ) : friends.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center' }}>
             <div style={{ marginBottom: 16, color: 'var(--text-tertiary)' }}><IconMessage size={48} /></div>
-            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>No tenes conversaciones</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>No tienes conversaciones</div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.5 }}>Toca el perfil de alguien para iniciar un chat.</div>
           </div>
         ) : (

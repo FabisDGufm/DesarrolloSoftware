@@ -36,13 +36,13 @@ export function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">El Pasillo</div>
-        <h1 className="auth-title">Inicia sesion</h1>
+        <h1 className="auth-title">Inicia sesión</h1>
 
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Correo electronico</label>
+            <label>Correo electrónico</label>
             <input
               type="email"
               value={email}
@@ -52,17 +52,17 @@ export function Login() {
             />
           </div>
           <div className="form-group">
-            <label>Contrasena</label>
+            <label>Contraseña</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tu contrasena"
+              placeholder="Tu contraseña"
               required
             />
           </div>
           <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Ingresando...' : 'Iniciar sesion'}
+            {loading ? 'Ingresando...' : 'Iniciar sesión'}
           </button>
         </form>
 

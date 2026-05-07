@@ -122,11 +122,11 @@ export function CreatePromotion() {
     return (
       <div className="empty-state">
         <div className="empty-state-title">
-          Inicia sesion
+          Inicia sesión
         </div>
 
         <p>
-          Necesitas iniciar sesion para publicar.
+          Necesitas iniciar sesión para publicar.
         </p>
       </div>
     )

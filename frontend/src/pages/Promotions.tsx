@@ -79,7 +79,7 @@ export function Promotions() {
           </div>
 
           <p>
-            Aun no existen emprendimientos publicados.
+            Aún no existen emprendimientos publicados.
           </p>
         </div>
       ) : (

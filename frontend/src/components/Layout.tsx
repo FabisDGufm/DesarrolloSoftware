@@ -187,7 +187,7 @@ export function Layout() {
           <div className="sidebar-user" onClick={() => navigate('/login')}>
             <Avatar name="?" />
             <div className="sidebar-user-info">
-              <div className="sidebar-user-name">Iniciar sesion</div>
+              <div className="sidebar-user-name">Iniciar sesión</div>
             </div>
           </div>
         )}
@@ -200,14 +200,14 @@ export function Layout() {
       <aside className="right-panel">
 
       <div className="trending-card">
-  <div className="trending-card-title">Accesos rapidos</div>
+  <div className="trending-card-title">Accesos rápidos</div>
   <div className="trending-item" onClick={() => navigate('/ayuda?slug=general')} style={{ cursor: 'pointer' }}>
     <div className="trending-item-category">Ayuda</div>
     <div className="trending-item-name">General</div>
   </div>
   <div className="trending-item" onClick={() => navigate('/ayuda?slug=matematicas')} style={{ cursor: 'pointer' }}>
     <div className="trending-item-category">Ayuda</div>
-    <div className="trending-item-name">Matematicas</div>
+    <div className="trending-item-name">Matemáticas</div>
   </div>
   <div className="trending-item" onClick={() => navigate('/explore')} style={{ cursor: 'pointer' }}>
     <div className="trending-item-category">Explorar</div>

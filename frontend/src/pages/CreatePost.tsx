@@ -23,7 +23,7 @@ export function CreatePost() {
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setStatus('La imagen no debe pesar mas de 5MB')
+      setStatus('La imagen no debe pesar más de 5MB')
       return
     }
     setSelectedFile(file)
@@ -75,8 +75,8 @@ export function CreatePost() {
           <div className="page-title">Crear post</div>
         </div>
         <div className="empty-state">
-          <div className="empty-state-title">Inicia sesion</div>
-          <p>Necesitas iniciar sesion para publicar</p>
+          <div className="empty-state-title">Inicia sesión</div>
+          <p>Necesitas iniciar sesión para publicar</p>
         </div>
       </>
     )
@@ -121,7 +121,7 @@ export function CreatePost() {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Que esta pasando en el pasillo?"
+            placeholder="¿Qué está pasando en el pasillo?"
             disabled={publishing}
             style={{ minHeight: 120, fontSize: 16 }}
             autoFocus
