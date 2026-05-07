@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 import { PostCard } from '../components/PostCard'
+import { IconStar } from '../components/Icons'
 
 interface Post {
   authorId: number
@@ -61,9 +62,10 @@ export function SavedPosts() {
           <div className="spinner" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">Sin guardados</div>
-          <p>Toca la estrella en un post para guardarlo y verlo aqui.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center' }}>
+          <div style={{ marginBottom: 16, color: 'var(--text-tertiary)' }}><IconStar size={48} /></div>
+          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Aun no guardas nada</div>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.5 }}>Cuando veas un post que quieras volver a leer, toca la estrella y aparecera aca.</div>
         </div>
       ) : (
         posts.map((post) => (

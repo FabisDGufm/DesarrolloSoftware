@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
+import { ReportModal } from './ReportModal'
+import { IconComment, IconRepeat, IconHeart, IconHeartFilled, IconStar, IconStarFilled, IconShare, IconMoreHorizontal, IconFlag, IconLink, IconTrash } from './Icons'
 
 interface PostCardProps {
   authorId: number
@@ -65,13 +67,16 @@ export function PostCard({
   isRepost = false,
   repostedAt,
 }: PostCardProps) {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const [liked, setLiked] = useState(false)
   const [likes, setLikes] = useState(likesCount)
   const [reposts, setReposts] = useState(repostsCount)
   const [hint, setHint] = useState<string | null>(null)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [saved, setSaved] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showReport, setShowReport] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [comments, setComments] = useState<ApiComment[]>([])
   const [commentDraft, setCommentDraft] = useState('')
@@ -80,6 +85,16 @@ export function PostCard({
 
   const interactionBody = { createdAt }
   const queryCreatedAt = encodeURIComponent(createdAt)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
 
   useEffect(() => {
     setCommentCount(commentsCount)
@@ -317,13 +332,50 @@ export function PostCard({
               letterSpacing: '0.02em',
             }}
           >
-            &#8634; Republicaste · {timeAgo(repostedAt)}
+            <IconRepeat size={14} /> Republicaste · {timeAgo(repostedAt)}
           </div>
         )}
         <div className="post-header">
           <span className="post-author">{displayName}</span>
           <span className="post-dot">·</span>
           <span className="post-time">{timeAgo(createdAt)}</span>
+          <div className="post-menu-wrapper" ref={menuRef}>
+            <button
+              className="post-menu-trigger"
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
+            >
+              <IconMoreHorizontal size={16} />
+            </button>
+            {menuOpen && (
+              <div className="post-menu-dropdown">
+                {isAuthenticated && (
+                  <button className="post-menu-item" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setShowReport(true) }}>
+                    <span className="post-menu-icon"><IconFlag size={15} /></span> Reportar
+                  </button>
+                )}
+                <button className="post-menu-item" onClick={(e) => {
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  const url = `${window.location.origin}/post/${authorId}/${postId}`
+                  navigator.clipboard?.writeText(url).then(() => showHint('Enlace copiado'))
+                }}>
+                  <span className="post-menu-icon"><IconLink size={15} /></span> Copiar enlace
+                </button>
+                {isAuthenticated && user && Number(user.id) === authorId && (
+                  <button className="post-menu-item danger" onClick={async (e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    try {
+                      await api.delete(`/api/posts/${authorId}/${postId}`)
+                      showHint('Post eliminado')
+                    } catch { showHint('No se pudo eliminar') }
+                  }}>
+                    <span className="post-menu-icon"><IconTrash size={15} /></span> Eliminar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         {text && <div className="post-text">{text}</div>}
         {imageUrl && (
@@ -339,7 +391,7 @@ export function PostCard({
             aria-label="Comentar"
             onClick={toggleComments}
           >
-            <span className="action-icon">&#128172;</span>
+            <span className="action-icon"><IconComment size={16} /></span>
             {commentCount > 0 && <span>{commentCount}</span>}
           </button>
           <button
@@ -349,7 +401,7 @@ export function PostCard({
             aria-label="Republicar"
             onClick={handleRepost}
           >
-            <span className="action-icon">&#8634;</span>
+            <span className="action-icon"><IconRepeat size={16} /></span>
             {reposts > 0 && <span>{reposts}</span>}
           </button>
           <button
@@ -359,7 +411,7 @@ export function PostCard({
             aria-label={liked ? 'Quitar me gusta' : 'Me gusta'}
             onClick={handleLike}
           >
-            <span className="action-icon">{liked ? '\u2665' : '\u2661'}</span>
+            <span className="action-icon">{liked ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}</span>
             {likes > 0 && <span>{likes}</span>}
           </button>
           <button
@@ -369,7 +421,7 @@ export function PostCard({
             aria-label={saved ? 'Quitar de guardados' : 'Guardar'}
             onClick={handleSave}
           >
-            <span className="action-icon">{saved ? '\u2605' : '\u2606'}</span>
+            <span className="action-icon">{saved ? <IconStarFilled size={16} /> : <IconStar size={16} />}</span>
           </button>
           <button
             type="button"
@@ -378,7 +430,7 @@ export function PostCard({
             aria-label="Compartir"
             onClick={handleShare}
           >
-            <span className="action-icon">&#8599;</span>
+            <span className="action-icon"><IconShare size={16} /></span>
           </button>
         </div>
 
@@ -460,6 +512,14 @@ export function PostCard({
           </div>
         )}
       </div>
+      {showReport && (
+        <ReportModal
+          authorName={displayName}
+          authorId={authorId}
+          postId={postId}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   )
 }

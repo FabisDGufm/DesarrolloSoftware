@@ -136,9 +136,9 @@ api.get(`/api/user-relations/${Number(user?.id)}/friend-requests/sent`),
                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.university || 'Universidad'}</div>
               </div>
               {isFriend(u.id) ? (
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Amigos ✓</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Amigos</span>
               ) : hasSentRequest(u.id) ? (
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Enviado ✓</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Enviado</span>
               ) : (
                 <button className="btn-follow follow" onClick={() => sendRequest(u.id)} disabled={sending === u.id}>
                   {sending === u.id ? '...' : 'Agregar'}

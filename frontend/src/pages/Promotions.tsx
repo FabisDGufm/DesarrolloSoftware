@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import { useAuthStore } from '../stores/authStore'
 import { PromotionCard } from '../components/PromotionCard'
 import type { Promotion } from '../types'
 
 export function Promotions() {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuthStore()
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -26,8 +30,13 @@ export function Promotions() {
   return (
     <>
       <div className="page-header">
-        <div className="page-title">
-          Emprendimientos
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="page-title">Emprendimientos</div>
+          {isAuthenticated && (
+            <button className="top-bar-publish" onClick={() => navigate('/create-promotion')} style={{ margin: '8px 0' }}>
+              + Promocionate
+            </button>
+          )}
         </div>
       </div>
 
@@ -35,7 +44,7 @@ export function Promotions() {
         style={{
           padding: 20,
           borderBottom: '1px solid var(--border-color)',
-          background: 'rgba(91,141,239,0.05)',
+          background: 'var(--primary-muted)',
         }}
       >
         <div

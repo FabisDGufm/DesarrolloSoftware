@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
+import { IconArrowLeft, IconMessage, IconSend } from '../components/Icons'
 
 interface Friend {
   id: number
@@ -148,7 +149,7 @@ export function Messages() {
                   borderRadius: 'var(--radius-full)',
                 }}
               >
-                &#8592;
+                <IconArrowLeft size={18} />
               </button>
               {selectedFriend.name}
             </div>
@@ -165,9 +166,10 @@ export function Messages() {
             <div className="spinner" />
           </div>
         ) : friends.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-title">Sin conversaciones</div>
-            <p>Agrega amigos para empezar a chatear</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center' }}>
+            <div style={{ marginBottom: 16, color: 'var(--text-tertiary)' }}><IconMessage size={48} /></div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>No tenes conversaciones</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.5 }}>Toca el perfil de alguien para iniciar un chat.</div>
           </div>
         ) : (
           <div className="conversation-list">
@@ -219,7 +221,7 @@ export function Messages() {
               onClick={handleSend}
               disabled={!newMsg.trim() || sending}
             >
-              &#10148;
+              <IconSend size={16} />
             </button>
           </div>
         </div>

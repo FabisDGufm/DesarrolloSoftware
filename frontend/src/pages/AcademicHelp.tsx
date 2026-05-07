@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 import { useSearchParams } from 'react-router-dom'
+import { IconArrowLeft, IconSend } from '../components/Icons'
 
 interface SpaceMeta {
   slug: string
@@ -144,7 +145,7 @@ export function AcademicHelp() {
                   borderRadius: 'var(--radius-full)',
                 }}
               >
-                &#8592;
+                <IconArrowLeft size={18} />
               </button>
               {selected.title}
             </div>
@@ -226,7 +227,7 @@ export function AcademicHelp() {
                   disabled={sending}
                 />
                 <button type="button" className="chat-send-btn" onClick={handleSend} disabled={!newMsg.trim() || sending}>
-                  &#10148;
+                  <IconSend size={16} />
                 </button>
               </>
             ) : (

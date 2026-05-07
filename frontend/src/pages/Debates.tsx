@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
+import { IconComment } from '../components/Icons'
 
 interface Debate {
   debateId: string
@@ -113,7 +114,7 @@ export function Debates() {
 
       {isAuthenticated && (
         <div className="compose-area">
-          <div className="avatar" style={{ background: '#555', color: '#fff', fontSize: 18 }}>?</div>
+          <div className="avatar" style={{ background: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', fontSize: 18 }}>?</div>
           <div className="compose-input">
             <textarea
               value={composeText}
@@ -142,7 +143,7 @@ export function Debates() {
         debates.map((debate) => (
           <div key={debate.debateId} className="post-card">
             <div className="post-header">
-              <div className="avatar" style={{ background: '#555', color: '#fff', fontSize: 18 }}>?</div>
+              <div className="avatar" style={{ background: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', fontSize: 18 }}>?</div>
               <div key={debate.debateId} className="post-card" style={{ display: 'flex', flexDirection: 'column' }}></div>
               <div style={{ marginTop: 12, paddingLeft: 16, borderLeft: '2px solid var(--border-color)', maxHeight: 300, overflowY: 'auto' }}></div>
               <div className="post-meta">
@@ -156,7 +157,7 @@ export function Debates() {
                 onClick={() => toggleReplies(debate.debateId)}
                 style={{ fontSize: 13, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
               >
-                💬 {openReply === debate.debateId ? 'Cerrar' : 'Responder'}
+                <IconComment size={14} /> {openReply === debate.debateId ? 'Cerrar' : 'Responder'}
               </button>
             </div>
 

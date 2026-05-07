@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
+import { IconArrowLeft, IconCamera } from '../components/Icons'
 
 export function CreatePost() {
   const { user, isAuthenticated } = useAuthStore()
@@ -97,7 +98,7 @@ export function CreatePost() {
                 padding: '12px 0',
               }}
             >
-              &#8592;
+              <IconArrowLeft size={18} />
             </button>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>Crear post</span>
           </div>
@@ -156,7 +157,7 @@ export function CreatePost() {
                 disabled={publishing}
                 title="Adjuntar imagen"
               >
-                &#128247;
+                <IconCamera size={18} />
               </button>
             </div>
           </div>
@@ -170,9 +171,9 @@ export function CreatePost() {
             margin: '0 16px',
             borderRadius: 'var(--r-sm)',
             background: status.startsWith('Error')
-              ? 'rgba(244, 33, 46, 0.1)'
-              : 'rgba(29, 155, 240, 0.1)',
-            color: status.startsWith('Error') ? 'var(--danger)' : 'var(--accent)',
+              ? 'var(--danger-muted)'
+              : 'var(--primary-muted)',
+            color: status.startsWith('Error') ? 'var(--danger)' : 'var(--primary)',
             fontSize: 14,
           }}
         >

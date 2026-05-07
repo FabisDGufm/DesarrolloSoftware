@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { PostCard } from '../components/PostCard'
 import { NewsCard } from '../components/NewsCard'
+import { IconSearch } from '../components/Icons'
+
+const MONTHS_ES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']
+
+function parseDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return {
+    day: String(d.getDate()).padStart(2, '0'),
+    month: MONTHS_ES[d.getMonth()] || '',
+    full: d.toLocaleDateString('es-GT', { day: 'numeric', month: 'long', year: 'numeric' }),
+  }
+}
 
 interface PostItem {
   authorId: number
@@ -181,7 +193,7 @@ export function Explore() {
       <div className="page-header">
         {tab === 'posts' && (
           <div className="search-bar">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><IconSearch size={16} /></span>
             <input
               type="text"
               placeholder="Buscar posts..."
@@ -213,13 +225,27 @@ export function Explore() {
         </div>
       </div>
 
-      {/* BOTÓN ANUNCIOS */}
+      {/* BOTON ANUNCIOS */}
       {tab === 'announcements' && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 20px' }}>
           <button
-            className="page-tab active"
-            style={{ border: 'none', padding: '8px 14px', borderRadius: '10px' }}
             onClick={() => setShowModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              border: '1px solid var(--accent)',
+              borderRadius: 'var(--r-md)',
+              background: 'transparent',
+              color: 'var(--accent)',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-soft)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
           >
             + Publicar anuncio
           </button>
@@ -228,26 +254,47 @@ export function Explore() {
 
       {/* MODAL */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ borderRadius: '16px', padding: '18px' }}>
-            <input
-              placeholder="Título del anuncio"
-              value={announcementTitle}
-              onChange={(e) => setAnnouncementTitle(e.target.value)}
-            />
-            <textarea
-              placeholder="Escribe tu anuncio..."
-              value={announcementText}
-              onChange={(e) => setAnnouncementText(e.target.value)}
-            />
-            <input
-              type="date"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-            />
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowModal(false)}>Cancelar</button>
-              <button onClick={createAnnouncement}>Publicar</button>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Publicar anuncio</div>
+              <button className="modal-close" onClick={() => setShowModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Titulo</label>
+                <input
+                  placeholder="Titulo del anuncio"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Descripcion</label>
+                <textarea
+                  placeholder="Escribe tu anuncio..."
+                  value={announcementText}
+                  onChange={(e) => setAnnouncementText(e.target.value)}
+                  rows={3}
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+              <div className="form-group">
+                <label>Fecha del evento (opcional)</label>
+                <input
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-outline" onClick={() => setShowModal(false)} style={{ width: 'auto', marginTop: 0, padding: '8px 18px' }}>
+                Cancelar
+              </button>
+              <button className="btn-primary" onClick={createAnnouncement} disabled={!announcementTitle.trim() || !announcementText.trim()} style={{ width: 'auto', marginTop: 0, padding: '8px 18px' }}>
+                Publicar
+              </button>
             </div>
           </div>
         </div>
@@ -267,50 +314,120 @@ export function Explore() {
           </div>
         </div>
       ) : (
-        results.map((r, i) => {
-          if (isPost(r)) {
-            return (
-              <PostCard
-                key={`post-${r.authorId}-${r.postId}`}
-                authorId={r.authorId}
-                postId={r.postId}
-                authorName={r.authorName}
-                authorPhoto={r.authorPhoto}
-                text={r.text}
-                imageUrl={r.imageUrl}
-                createdAt={r.createdAt}
-              />
-            )
-          }
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {results.map((r, i) => {
+            if (isPost(r)) {
+              return (
+                <PostCard
+                  key={`post-${r.authorId}-${r.postId}`}
+                  authorId={r.authorId}
+                  postId={r.postId}
+                  authorName={r.authorName}
+                  authorPhoto={r.authorPhoto}
+                  text={r.text}
+                  imageUrl={r.imageUrl}
+                  createdAt={r.createdAt}
+                />
+              )
+            }
 
-          if (isAnnouncement(r)) {
-            return (
-              <div key={`ann-${r.announcementId}`} className="post-card">
-                <h3>{r.title}</h3>
-                <p>{r.text}</p>
-                {r.eventDate && <small>Fecha: {r.eventDate}</small>}
-                <br />
-                <small>Universidad: {r.university}</small>
-              </div>
-            )
-          }
+            if (isAnnouncement(r)) {
+              const date = r.eventDate ? parseDate(r.eventDate) : r.createdAt ? parseDate(r.createdAt) : null
+              return (
+                <div
+                  key={`ann-${r.announcementId}`}
+                  style={{
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--r-md)',
+                    padding: '16px 20px',
+                    transition: 'background 0.15s, border-color 0.15s',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-surface)'
+                    e.currentTarget.style.borderColor = 'var(--border-strong)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-tertiary)'
+                    e.currentTarget.style.borderColor = 'var(--border-color)'
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                    {date && (
+                      <div style={{
+                        flexShrink: 0,
+                        width: 56,
+                        height: 56,
+                        borderRadius: 'var(--r-sm)',
+                        background: 'var(--accent-soft)',
+                        border: '1px solid rgba(232, 168, 56, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 4,
+                      }}>
+                        <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>{date.day}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>{date.month}</span>
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 17,
+                        fontWeight: 700,
+                        color: 'var(--text-primary)',
+                        margin: 0,
+                        letterSpacing: '-0.01em',
+                        lineHeight: 1.3,
+                      }}>{r.title}</h3>
+                      <p style={{
+                        fontSize: 14,
+                        color: 'var(--text-secondary)',
+                        margin: '4px 0 0',
+                        lineHeight: 1.45,
+                      }}>{r.text}</p>
+                    </div>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 16,
+                    marginTop: 12,
+                    paddingTop: 12,
+                    borderTop: '1px solid var(--border-color)',
+                  }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
+                      {r.university}
+                    </span>
+                    {date && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
+                        {date.full}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            }
 
-          if (isNews(r)) {
-            return (
-              <NewsCard
-                key={`news-${i}`}
-                title={r.title ?? ''}
-                description={r.description}
-                imageUrl={r.imageUrl}
-                url={r.url}
-                publishedAt={r.publishedAt}
-                source={r.source}
-              />
-            )
-          }
+            if (isNews(r)) {
+              return (
+                <NewsCard
+                  key={`news-${i}`}
+                  title={r.title ?? ''}
+                  description={r.description}
+                  imageUrl={r.imageUrl}
+                  url={r.url}
+                  publishedAt={r.publishedAt}
+                  source={r.source}
+                />
+              )
+            }
 
-          return null
-        })
+            return null
+          })}
+        </div>
       )}
     </>
   )

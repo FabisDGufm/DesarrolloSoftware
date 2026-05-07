@@ -45,7 +45,7 @@ export function PromotionCard({
             borderRadius: 18,
             overflow: 'hidden',
             border: '1px solid var(--border-color)',
-            background: '#111',
+            background: 'var(--bg-secondary)',
             }}
         >
             <img
@@ -56,7 +56,7 @@ export function PromotionCard({
                 height: 320,
                 objectFit: 'contain',
                 display: 'block',
-                background: '#111',
+                background: 'var(--bg-secondary)',
             }}
             />
         </div>

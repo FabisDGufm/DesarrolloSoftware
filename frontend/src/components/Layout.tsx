@@ -2,6 +2,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
+import { TopBar } from './TopBar'
+import { IconHome, IconSearch, IconMessage, IconGrid, IconUsers, IconShield } from './Icons'
 
 interface SuggestedUser {
   id: number
@@ -87,7 +89,7 @@ function ConnectPanel({ currentUserId }: { currentUserId?: number }) {
             <div className="follow-suggestion-handle">{u.university || 'Universidad'}</div>
           </div>
           {sent.includes(u.id) ? (
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Enviado ✓</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Enviado</span>
           ) : (
             <button className="btn-follow follow" onClick={() => handleSend(u.id)}>Agregar</button>
           )}
@@ -98,14 +100,9 @@ function ConnectPanel({ currentUserId }: { currentUserId?: number }) {
 }
 
 export function Layout() {
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
   const [pendingRequests, setPendingRequests] = useState(0)
-
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
 
   useEffect(() => {
     if (!user) return
@@ -124,6 +121,8 @@ export function Layout() {
   }, [user])
 
   return (
+    <>
+    <TopBar />
     <div className="app-layout">
       <nav className="sidebar">
         <div className="sidebar-logo">
@@ -131,25 +130,27 @@ export function Layout() {
         </div>
         <div className="sidebar-nav">
           <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
-            <span className="nav-icon">&#9750;</span>
+            <span className="nav-icon"><IconHome /></span>
             <span>Inicio</span>
           </NavLink>
           <NavLink to="/explore" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#9906;</span>
+            <span className="nav-icon"><IconSearch /></span>
             <span>Explorar</span>
           </NavLink>
-          {isAuthenticated && (
-            <NavLink to="/guardados" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-              <span className="nav-icon">&#9733;</span>
-              <span>Guardados</span>
-            </NavLink>
-          )}
+          <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon"><IconMessage /></span>
+            <span>Mensajes</span>
+          </NavLink>
+          <NavLink to="/comunidades" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon"><IconGrid /></span>
+            <span>Comunidades</span>
+          </NavLink>
           <NavLink to="/amigos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#128101;</span>
+            <span className="nav-icon"><IconUsers /></span>
             <span>Amigos</span>
             {pendingRequests > 0 && (
               <span style={{
-                background: 'red',
+                background: 'var(--danger)',
                 color: 'white',
                 borderRadius: '50%',
                 fontSize: 11,
@@ -164,57 +165,22 @@ export function Layout() {
               }}>{pendingRequests}</span>
             )}
           </NavLink>
-          <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#9883;</span>
-            <span>Mensajes</span>
-          </NavLink>
-          <NavLink to="/ayuda" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#9998;</span>
-            <span>Ayuda</span>
-          </NavLink>
-          <NavLink to="/reportar" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#9888;</span>
-            <span>Reportar</span>
-          </NavLink>
           {(user?.role ?? 0) >= 1 && (
             <NavLink to="/moderacion" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-              <span className="nav-icon">&#9632;</span>
+              <span className="nav-icon"><IconShield /></span>
               <span>Moderacion</span>
-            </NavLink>
-          )}
-          <NavLink to="/debates" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#128172;</span>
-            <span>Sin Filtro</span>
-          </NavLink>
-          <NavLink to="/promotions" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon">&#128717;</span>
-            <span>Emprendimientos</span>
-          </NavLink>
-          {isAuthenticated && (
-            <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-              <span className="nav-icon">&#9673;</span>
-              <span>Perfil</span>
             </NavLink>
           )}
         </div>
 
-        {isAuthenticated && (
-          <>
-            <button className="sidebar-post-btn" onClick={() => navigate('/create-post')}>
-              Publicar
-            </button>
-            <button className="sidebar-post-btn" onClick={() => navigate('/create-promotion')} style={{ marginTop: 10, background: 'var(--accent)' }}>
-              Promocionate
-            </button>
-          </>
-        )}
+        {/* Publicar moved to TopBar */}
 
         {isAuthenticated && user ? (
-          <div className="sidebar-user" onClick={handleLogout} title="Cerrar sesion">
+          <div className="sidebar-user" onClick={() => navigate('/profile/editar')} title="Editar perfil">
             <Avatar name={user.name} photo={user.profilePhoto} />
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{user.name}</div>
-              <div className="sidebar-user-handle">Cerrar sesion</div>
+              <div className="sidebar-user-handle">Editar perfil</div>
             </div>
           </div>
         ) : (
@@ -256,5 +222,6 @@ export function Layout() {
         {isAuthenticated && <ConnectPanel currentUserId={Number(user?.id)} />}
       </aside>
     </div>
+    </>
   )
 }

@@ -37,22 +37,19 @@ export function NewsCard({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap');
-
         .news-card {
-          font-family: 'Source Sans 3', sans-serif;
-          background: #fff;
-          border: 1px solid #e8e3da;
-          border-radius: 4px;
+          background: var(--bg-tertiary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--r-md);
           overflow: hidden;
           max-width: 480px;
-          transition: box-shadow 0.25s ease, transform 0.25s ease;
+          transition: background 0.15s, border-color 0.15s;
           position: relative;
         }
 
         .news-card:hover {
-          box-shadow: 0 8px 32px rgba(0,0,0,0.10);
-          transform: translateY(-2px);
+          background: var(--bg-surface);
+          border-color: var(--border-strong);
         }
 
         .news-card-image-wrap {
@@ -60,7 +57,7 @@ export function NewsCard({
           width: 100%;
           aspect-ratio: 16/9;
           overflow: hidden;
-          background: #f0ece4;
+          background: var(--bg-surface);
         }
 
         .news-card-image-wrap img {
@@ -78,7 +75,7 @@ export function NewsCard({
         .news-card-image-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to top, rgba(20,16,10,0.28) 0%, transparent 55%);
+          background: linear-gradient(to top, rgba(15, 15, 18, 0.4) 0%, transparent 55%);
           pointer-events: none;
         }
 
@@ -97,43 +94,43 @@ export function NewsCard({
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          background: #f5f1eb;
-          border: 1px solid #e0d9cf;
-          border-radius: 3px;
-          padding: 2px 8px;
+          background: var(--accent-soft);
+          border: 1px solid rgba(232, 168, 56, 0.2);
+          border-radius: var(--r-sm);
+          padding: 3px 10px;
           font-size: 11px;
-          font-weight: 600;
-          color: #5a4e3c;
+          font-weight: 700;
+          color: var(--accent);
           letter-spacing: 0.04em;
           text-transform: uppercase;
         }
 
         .news-card-source-badge svg {
           flex-shrink: 0;
-          opacity: 0.7;
+          opacity: 0.8;
         }
 
         .news-card-dot {
           width: 3px;
           height: 3px;
           border-radius: 50%;
-          background: #bbb4a8;
+          background: var(--text-muted);
           flex-shrink: 0;
         }
 
         .news-card-time {
           font-size: 12px;
-          color: #9e9488;
+          color: var(--text-muted);
           font-weight: 500;
           letter-spacing: 0.02em;
         }
 
         .news-card-title {
-          font-family: 'Playfair Display', serif;
+          font-family: var(--font-display);
           font-size: 17px;
           font-weight: 700;
           line-height: 1.35;
-          color: #1a1510;
+          color: var(--text-primary);
           margin: 0 0 9px 0;
           letter-spacing: -0.01em;
         }
@@ -141,7 +138,7 @@ export function NewsCard({
         .news-card-desc {
           font-size: 13.5px;
           line-height: 1.6;
-          color: #6b6358;
+          color: var(--text-secondary);
           margin: 0 0 14px 0;
           display: -webkit-box;
           -webkit-line-clamp: 3;
@@ -151,7 +148,7 @@ export function NewsCard({
 
         .news-card-divider {
           height: 1px;
-          background: #ede8e1;
+          background: var(--border-color);
           margin: 12px 0;
         }
 
@@ -159,7 +156,7 @@ export function NewsCard({
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          color: #b84a00;
+          color: var(--accent);
           font-size: 12.5px;
           font-weight: 600;
           text-decoration: none;
@@ -169,7 +166,7 @@ export function NewsCard({
         }
 
         .news-card-link:hover {
-          color: #8c3800;
+          color: var(--accent-hover);
           gap: 8px;
         }
 
@@ -214,10 +211,10 @@ export function NewsCard({
             )}
           </div>
 
-          {/* TÍTULO */}
+          {/* TITULO */}
           <h2 className="news-card-title">{title}</h2>
 
-          {/* DESCRIPCIÓN */}
+          {/* DESCRIPCION */}
           {content && (
             <p className="news-card-desc">{content}</p>
           )}

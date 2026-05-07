@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 import { PostCard } from '../components/PostCard'
+import { EmptyState } from '../components/EmptyState'
+import { IconCamera, IconUsers, IconHome } from '../components/Icons'
 
 interface Post {
   authorId: number
@@ -18,6 +21,7 @@ type Tab = 'foryou' | 'university' | 'following'
 
 export function Home() {
   const { user, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
 
   const [tab, setTab] = useState<Tab>('foryou')
   const [posts, setPosts] = useState<Post[]>([])
@@ -242,7 +246,7 @@ export function Home() {
                 className="compose-tool-btn"
                 onClick={() => fileRef.current?.click()}
               >
-                📷
+                <IconCamera size={18} />
               </button>
 
               <button
@@ -263,13 +267,21 @@ export function Home() {
           <div className="spinner" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">
-            {tab === 'following'
-              ? 'Agrega amigos para ver sus posts aquí'
-              : 'No hay posts'}
-          </div>
-        </div>
+        tab === 'following' ? (
+          <EmptyState
+            icon={<IconUsers size={48} />}
+            title="Agrega amigos para ver sus posts"
+            description="Seguí algunas personas y sus publicaciones apareceran aca."
+            action={{ label: 'Explorar comunidades', onClick: () => navigate('/comunidades') }}
+          />
+        ) : (
+          <EmptyState
+            icon={<IconHome size={48} />}
+            title="El pasillo esta tranquilo"
+            description="Seguí algunas comunidades o publica lo primero que se te ocurra."
+            action={{ label: 'Explorar comunidades', onClick: () => navigate('/comunidades') }}
+          />
+        )
       ) : (
         posts.map((post) => (
           <PostCard
