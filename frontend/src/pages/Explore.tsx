@@ -9,6 +9,7 @@ interface SearchResult {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
+  type?: 'post' | 'news' | 'external'
 }
 
 const CATEGORIES = [
@@ -32,20 +33,26 @@ export function Explore() {
       setHasSearched(false)
       return
     }
+
     const timeout = setTimeout(() => {
       handleSearch()
     }, 500)
+
     return () => clearTimeout(timeout)
   }, [query])
 
+  // 🔍 SEARCH NORMAL
   const handleSearch = async () => {
     if (!query.trim()) return
+
     setSearching(true)
     setHasSearched(true)
+
     try {
       const { data } = await api.get('/api/explore/search', {
         params: { q: query.trim() },
       })
+
       const items = data.data || data
       setResults(Array.isArray(items) ? items : [])
     } catch {
@@ -55,11 +62,21 @@ export function Explore() {
     }
   }
 
+  // 🧭 BROWSE + NEWS INTEGRADO
   const handleBrowse = async (type: string) => {
     setSearching(true)
     setHasSearched(true)
     setQuery('')
+
     try {
+      // 📰 NEWS RSS (NUEVO)
+      if (type === 'news') {
+        const { data } = await api.get('/api/news/guatemala')
+        const items = data.data || data
+        setResults(Array.isArray(items) ? items : [])
+        return
+      }
+
       const { data } = await api.get(`/api/explore/browse/${type}`)
       const items = data.data || data
       setResults(Array.isArray(items) ? items : [])
@@ -69,6 +86,13 @@ export function Explore() {
       setSearching(false)
     }
   }
+
+  // 📰 AUTO LOAD NEWS TAB
+  useEffect(() => {
+    if (tab === 'news') {
+      handleBrowse('news')
+    }
+  }, [tab])
 
   return (
     <>
@@ -84,6 +108,7 @@ export function Explore() {
             />
           </div>
         </div>
+
         <div className="page-tabs">
           {['foryou', 'trending', 'news', 'sports', 'entertainment'].map((t) => (
             <button
@@ -101,6 +126,7 @@ export function Explore() {
         </div>
       </div>
 
+      {/* RESULTS */}
       {hasSearched ? (
         searching ? (
           <div className="loading-spinner">

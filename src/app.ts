@@ -15,6 +15,7 @@ import authRoutes from "./routes/auth-routes.js";
 import { latencyMiddleware } from "./middlewares/latency-middleware.js";
 import anonDebateRoutes from './routes/anon-debate-routes.js';
 import promotionRoutes from "./routes/promotion-routes.js";
+import newsRoutes from "./routes/news-routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -52,6 +53,9 @@ app.use('/posts', postRoutes);
 
 app.use("/api/promotions", promotionRoutes);
 app.use("/promotions", promotionRoutes);
+
+app.use("/api/news", newsRoutes);
+app.use("/news", newsRoutes);
 
 app.use('/users', userRoutes);
 app.use('/user-relations', userRelationRoutes);
