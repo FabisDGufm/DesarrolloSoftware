@@ -58,7 +58,12 @@ export function Profile() {
       ])
 
       if (profileRes.status === 'fulfilled') {
-        setProfile(profileRes.value.data.data || profileRes.value.data)
+        const raw = profileRes.value.data.data || profileRes.value.data
+        setProfile(
+          raw.user
+            ? { ...raw.user, friends: raw.friends, receivedRequests: raw.receivedRequests, sentRequests: raw.sentRequests }
+            : raw
+        )
       } else if (user && isOwnProfile) {
         setProfile({
           id: Number(user.id),
