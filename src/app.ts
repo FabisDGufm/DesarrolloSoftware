@@ -29,7 +29,7 @@ app.use('/profile', profileRoutes);
 app.use("/auth", authRoutes);
 
 app.get('/', (_req, res) => {
-    res.send('Hello World!!!!');
+    res.send('Hello World!!!! :)');
 });
 
 app.get('/health', (_req, res) => {
