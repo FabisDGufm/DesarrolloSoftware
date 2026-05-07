@@ -45,9 +45,14 @@ export function Messages() {
   const loadFriends = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get(`/api/user-relations/${user!.id}/friends`)
-      const list = data.data || data
-      setFriends(Array.isArray(list) ? list : [])
+      const [relRes, usersRes] = await Promise.all([
+        api.get(`/api/user-relations/${Number(user!.id)}/friends`),
+        api.get('/api/users')
+      ])
+      const friendIds: number[] = relRes.data.data || relRes.data || []
+      const allUsers = usersRes.data.data || []
+      const friendUsers = allUsers.filter((u: Friend) => friendIds.includes(u.id))
+      setFriends(friendUsers)
     } catch {
       setFriends([])
     } finally {
