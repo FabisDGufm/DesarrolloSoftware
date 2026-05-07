@@ -33,25 +33,32 @@ export function Home() {
   }, [tab])
 
   const loadFeed = async () => {
+    // Guard: sin usuario autenticado no hacemos llamadas
+    if (!isAuthenticated || !user?.id) {
+      setPosts([])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
 
     try {
-      let data: any = []
+      let data: Post[] = []
 
       // =========================
       // PARA TI
       // =========================
       if (tab === 'foryou') {
         const res = await api.get('/api/posts/social-feed')
-        data = res.data.data || res.data
+        data = res.data.data ?? res.data ?? []
       }
 
       // =========================
-      // UNIVERSIDAD (YA FUNCIONA)
+      // UNIVERSIDAD
       // =========================
       else if (tab === 'university') {
         const res = await api.get('/api/posts/social-feed')
-        const feed = res.data.data || res.data
+        const feed: Post[] = res.data.data ?? res.data ?? []
 
         data = Array.isArray(feed)
           ? feed.filter(
@@ -63,37 +70,34 @@ export function Home() {
       }
 
       // =========================
-      // FOLLOWING (FIX REAL)
+      // SIGUIENDO
       // =========================
       else if (tab === 'following') {
-        // 1. obtener amigos
-        const friendsRes = await api.get(
-          `/api/user-relations/${user?.id}/friends`
-        )
+        // 1. Obtener lista de amigos
+        const friendsRes = await api.get(`/api/user-relations/${user.id}/friends`)
 
-        // 🔥 normalizar respuesta (ESTO ES CLAVE)
-        const friendsRaw =
-          friendsRes.data?.data ?? friendsRes.data
+        // getFriends devuelve number[] directo, sin wrapper { data }
+        // pero manejamos ambos casos por seguridad
+        const friendIds: number[] = Array.isArray(friendsRes.data)
+          ? friendsRes.data
+          : Array.isArray(friendsRes.data?.data)
+            ? friendsRes.data.data
+            : []
 
-        const friendIds: number[] = Array.isArray(friendsRaw)
-          ? friendsRaw
-          : []
-
-        // 2. si no hay amigos → feed vacío
+        // 2. Sin amigos → feed vacío
         if (friendIds.length === 0) {
           data = []
         } else {
-          // 3. traer posts de amigos
-          const postsRes = await api.post(
-            '/api/posts/by-authors',
-            {
-              authorIds: friendIds,
-            }
-          )
+          // 3. Traer feed general y filtrar por amigos
+          const postsRes = await api.get('/api/posts/social-feed')
+          const feed: Post[] = postsRes.data?.data ?? postsRes.data ?? []
 
-          const feed = postsRes.data?.data ?? postsRes.data
+          // Set para lookup O(1)
+          const friendSet = new Set(friendIds)
 
-          data = Array.isArray(feed) ? feed : []
+          data = Array.isArray(feed)
+            ? feed.filter((p: Post) => friendSet.has(p.authorId))
+            : []
         }
       }
 
@@ -171,27 +175,21 @@ export function Home() {
 
         <div className="page-tabs">
           <button
-            className={`page-tab ${
-              tab === 'foryou' ? 'active' : ''
-            }`}
+            className={`page-tab ${tab === 'foryou' ? 'active' : ''}`}
             onClick={() => setTab('foryou')}
           >
             Para ti
           </button>
 
           <button
-            className={`page-tab ${
-              tab === 'university' ? 'active' : ''
-            }`}
+            className={`page-tab ${tab === 'university' ? 'active' : ''}`}
             onClick={() => setTab('university')}
           >
             Tu Universidad
           </button>
 
           <button
-            className={`page-tab ${
-              tab === 'following' ? 'active' : ''
-            }`}
+            className={`page-tab ${tab === 'following' ? 'active' : ''}`}
             onClick={() => setTab('following')}
           >
             Siguiendo
@@ -261,7 +259,11 @@ export function Home() {
         </div>
       ) : posts.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">No hay posts</div>
+          <div className="empty-state-title">
+            {tab === 'following'
+              ? 'Agrega amigos para ver sus posts aquí'
+              : 'No hay posts'}
+          </div>
         </div>
       ) : (
         posts.map((post) => (
