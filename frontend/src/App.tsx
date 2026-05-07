@@ -11,6 +11,8 @@ import { AcademicHelp } from './pages/AcademicHelp'
 import { ReportContent } from './pages/ReportContent'
 import { ModerationPanel } from './pages/ModerationPanel'
 import { Debates } from './pages/Debates'
+import { Promotions } from './pages/Promotions'
+import { CreatePromotion } from './pages/CreatePromotion'
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
       {/* Auth pages (no layout) */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/promotions" element={<Promotions />} />
 
       {/* Main app with layout */}
       <Route element={<Layout />}>
@@ -31,6 +34,8 @@ function App() {
         <Route path="/profile/:id" element={<Profile />} />
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/debates" element={<Debates />} />
+        <Route path="/create-promotion" element={<CreatePromotion />}
+/>
       </Route>
     </Routes>
   )

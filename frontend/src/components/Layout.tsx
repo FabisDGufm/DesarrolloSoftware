@@ -27,32 +27,44 @@ export function Layout() {
             <span className="nav-icon">&#9750;</span>
             <span>Inicio</span>
           </NavLink>
+
           <NavLink to="/explore" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9906;</span>
             <span>Explorar</span>
           </NavLink>
+
           <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9883;</span>
             <span>Mensajes</span>
           </NavLink>
+
           <NavLink to="/ayuda" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9998;</span>
             <span>Ayuda</span>
           </NavLink>
+
           <NavLink to="/reportar" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9888;</span>
             <span>Reportar</span>
           </NavLink>
+
           {(user?.role ?? 0) >= 1 && (
             <NavLink to="/moderacion" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">&#9632;</span>
               <span>Moderacion</span>
             </NavLink>
           )}
+
           <NavLink to="/debates" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#128172;</span>
             <span>Sin Filtro</span>
           </NavLink>
+
+          <NavLink to="/promotions" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <span className="nav-icon">&#128717;</span>
+            <span>Emprendimientos</span>
+          </NavLink>
+
           {isAuthenticated && (
             <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">&#9673;</span>
@@ -62,9 +74,22 @@ export function Layout() {
         </div>
 
         {isAuthenticated && (
-          <button className="sidebar-post-btn" onClick={() => navigate('/create-post')}>
-            Publicar
-          </button>
+          <>
+            <button className="sidebar-post-btn" onClick={() => navigate('/create-post')}>
+              Publicar
+            </button>
+
+            <button
+              className="sidebar-post-btn"
+              onClick={() => navigate('/create-promotion')}
+              style={{
+                marginTop: 10,
+                background: 'var(--accent)',
+              }}
+            >
+              Emprender
+            </button>
+          </>
         )}
 
         {isAuthenticated && user ? (
@@ -99,16 +124,19 @@ export function Layout() {
 
         <div className="trending-card">
           <div className="trending-card-title">En el pasillo</div>
+
           <div className="trending-item">
             <div className="trending-item-category">Guatemala</div>
             <div className="trending-item-name">Vida Universitaria</div>
             <div className="trending-item-count">1,234 posts</div>
           </div>
+
           <div className="trending-item">
             <div className="trending-item-category">Academico</div>
             <div className="trending-item-name">Examenes Finales</div>
             <div className="trending-item-count">890 posts</div>
           </div>
+
           <div className="trending-item">
             <div className="trending-item-category">Tech</div>
             <div className="trending-item-name">Desarrollo de Software</div>
@@ -118,6 +146,7 @@ export function Layout() {
 
         <div className="who-to-follow">
           <div className="who-to-follow-title">Conecta</div>
+
           <div className="follow-suggestion">
             <Avatar name="M" size="avatar-lg" />
             <div className="follow-suggestion-info">
@@ -126,6 +155,7 @@ export function Layout() {
             </div>
             <button className="btn-follow follow">Seguir</button>
           </div>
+
           <div className="follow-suggestion">
             <Avatar name="C" size="avatar-lg" />
             <div className="follow-suggestion-info">
@@ -134,6 +164,7 @@ export function Layout() {
             </div>
             <button className="btn-follow follow">Seguir</button>
           </div>
+
           <div className="follow-suggestion">
             <Avatar name="A" size="avatar-lg" />
             <div className="follow-suggestion-info">
