@@ -2,15 +2,36 @@ import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { PostCard } from '../components/PostCard'
 
-interface Item {
+/* =========================
+   POSTS
+========================= */
+interface PostItem {
   authorId: number
   postId: string
   text: string
   imageUrl?: string | null
   createdAt: string
   authorName?: string
-  type?: 'announcement'
 }
+
+/* =========================
+   ANNOUNCEMENTS
+========================= */
+interface AnnouncementItem {
+  university: string
+  announcementId: string
+  title: string
+  text: string
+  imageUrl?: string | null
+  eventDate?: string
+  createdAt: string
+  createdBy: number
+}
+
+/* =========================
+   UNION TYPE
+========================= */
+type Item = PostItem | AnnouncementItem
 
 type Tab = 'posts' | 'news' | 'announcements'
 
@@ -21,8 +42,14 @@ export function Explore() {
   const [loading, setLoading] = useState(false)
 
   const [showModal, setShowModal] = useState(false)
-  const [announcementText, setAnnouncementText] = useState('')
 
+  const [announcementTitle, setAnnouncementTitle] = useState('')
+  const [announcementText, setAnnouncementText] = useState('')
+  const [eventDate, setEventDate] = useState('')
+
+  /* =========================
+     EFFECT: TAB CHANGE
+  ========================= */
   useEffect(() => {
     setResults([])
     setQuery('')
@@ -37,6 +64,9 @@ export function Explore() {
     }
   }, [tab])
 
+  /* =========================
+     SEARCH POSTS ONLY
+  ========================= */
   useEffect(() => {
     if (tab !== 'posts') return
 
@@ -52,6 +82,9 @@ export function Explore() {
     return () => clearTimeout(timeout)
   }, [query, tab])
 
+  /* =========================
+     POSTS SEARCH
+  ========================= */
   const searchPosts = async () => {
     setLoading(true)
     try {
@@ -67,6 +100,9 @@ export function Explore() {
     }
   }
 
+  /* =========================
+     NEWS
+  ========================= */
   const loadNews = async () => {
     setLoading(true)
     try {
@@ -79,6 +115,9 @@ export function Explore() {
     }
   }
 
+  /* =========================
+     ANNOUNCEMENTS
+  ========================= */
   const loadAnnouncements = async () => {
     setLoading(true)
     try {
@@ -91,18 +130,25 @@ export function Explore() {
     }
   }
 
+  /* =========================
+     CREATE ANNOUNCEMENT
+  ========================= */
   const createAnnouncement = async () => {
-    if (!announcementText.trim()) return
+    if (!announcementTitle.trim() || !announcementText.trim()) return
 
     setLoading(true)
 
     try {
       await api.post('/api/announcements', {
+        title: announcementTitle,
         text: announcementText,
+        eventDate: eventDate || undefined,
         imageUrl: null
       })
 
+      setAnnouncementTitle('')
       setAnnouncementText('')
+      setEventDate('')
       setShowModal(false)
 
       loadAnnouncements()
@@ -111,8 +157,23 @@ export function Explore() {
     }
   }
 
+  /* =========================
+     TYPE GUARD
+  ========================= */
+  const isPost = (r: any): r is PostItem => {
+    return 'postId' in r
+  }
+
+  const isAnnouncement = (r: any): r is AnnouncementItem => {
+    return 'announcementId' in r
+  }
+
+  /* =========================
+     UI
+  ========================= */
   return (
     <>
+      {/* HEADER */}
       <div className="page-header">
 
         <div className="search-bar">
@@ -150,6 +211,7 @@ export function Explore() {
         </div>
       </div>
 
+      {/* BUTTON CREATE */}
       {tab === 'announcements' && (
         <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'flex-end' }}>
           <button
@@ -167,14 +229,27 @@ export function Explore() {
         </div>
       )}
 
+      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
+
+            <input
+              placeholder="Título del anuncio"
+              value={announcementTitle}
+              onChange={(e) => setAnnouncementTitle(e.target.value)}
+            />
+
             <textarea
               placeholder="Escribe tu anuncio..."
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
-              style={{ width: '100%', minHeight: '120px' }}
+            />
+
+            <input
+              type="date"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
             />
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -186,10 +261,12 @@ export function Explore() {
                 Cancelar
               </button>
             </div>
+
           </div>
         </div>
       )}
 
+      {/* LOADING */}
       {loading ? (
         <div className="loading-spinner">
           <div className="spinner" />
@@ -199,17 +276,53 @@ export function Explore() {
           <div className="empty-state-title">Sin resultados</div>
         </div>
       ) : (
-        results.map((r) => (
-          <PostCard
-            key={`${r.authorId}-${r.postId}`}
-            authorId={r.authorId}
-            postId={r.postId}
-            authorName={r.authorName}
-            text={r.text}
-            imageUrl={r.imageUrl}
-            createdAt={r.createdAt}
-          />
-        ))
+        results.map((r) => {
+          /* =========================
+             POSTS
+          ========================= */
+          if (isPost(r)) {
+            return (
+              <PostCard
+                key={`${r.authorId}-${r.postId}`}
+                authorId={r.authorId}
+                postId={r.postId}
+                authorName={r.authorName}
+                text={r.text}
+                imageUrl={r.imageUrl}
+                createdAt={r.createdAt}
+              />
+            )
+          }
+
+          /* =========================
+             ANNOUNCEMENTS
+          ========================= */
+          if (isAnnouncement(r)) {
+            return (
+              <div key={r.announcementId} className="post-card">
+                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                  {r.title}
+                </div>
+
+                <div style={{ marginBottom: '10px' }}>
+                  {r.text}
+                </div>
+
+                {r.eventDate && (
+                  <div style={{ fontSize: '12px', opacity: 0.7 }}>
+                    Fecha: {r.eventDate}
+                  </div>
+                )}
+
+                <div style={{ fontSize: '12px', opacity: 0.6 }}>
+                  Universidad: {r.university}
+                </div>
+              </div>
+            )
+          }
+
+          return null
+        })
       )}
     </>
   )

@@ -1,8 +1,10 @@
 export interface Announcement {
-    authorId: number;
+    university: string;
     announcementId: string;
+    title: string;
     text: string;
     imageUrl?: string | null;
+    eventDate?: string;
     createdAt: string;
-    university?: string | null;
+    createdBy: number;
 }

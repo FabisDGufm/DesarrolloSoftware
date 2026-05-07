@@ -1,12 +1,17 @@
 import { dynamo } from "../config/dynamodb.js";
-import { PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import {
+    PutCommand,
+    QueryCommand,
+    GetCommand
+} from "@aws-sdk/lib-dynamodb";
+
 import type { Announcement } from "../models/announcement.js";
 
 const TABLE = "Announcements";
 
 export class AnnouncementRepository {
 
-    async create(announcement: Announcement) {
+    async create(announcement: Announcement): Promise<Announcement> {
         await dynamo.send(
             new PutCommand({
                 TableName: TABLE,
@@ -17,21 +22,31 @@ export class AnnouncementRepository {
         return announcement;
     }
 
-    async findAll(): Promise<Announcement[]> {
-        const res = await dynamo.send(
-            new ScanCommand({
-                TableName: TABLE
+    async findByUniversity(university: string): Promise<Announcement[]> {
+        const r = await dynamo.send(
+            new QueryCommand({
+                TableName: TABLE,
+                KeyConditionExpression: "university = :u",
+                ExpressionAttributeValues: {
+                    ":u": university
+                }
             })
         );
 
-        return (res.Items ?? []) as Announcement[];
+        return (r.Items ?? []) as Announcement[];
     }
 
-    async findByUniversity(university?: string) {
-        const all = await this.findAll();
+    async findById(university: string, announcementId: string) {
+        const r = await dynamo.send(
+            new GetCommand({
+                TableName: TABLE,
+                Key: {
+                    university,
+                    announcementId
+                }
+            })
+        );
 
-        if (!university) return all;
-
-        return all.filter(a => a.university === university);
+        return r.Item as Announcement | undefined;
     }
 }
