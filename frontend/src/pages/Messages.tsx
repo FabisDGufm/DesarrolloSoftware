@@ -42,6 +42,14 @@ export function Messages() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+  if (!selectedFriend) return
+  const interval = setInterval(() => {
+    loadConversation(selectedFriend.id)
+  }, 1000)
+  return () => clearInterval(interval)
+}, [selectedFriend])
+
   const loadFriends = async () => {
     setLoading(true)
     try {
@@ -65,7 +73,9 @@ export function Messages() {
       const { data } = await api.get(`/api/messages/with/${otherUserId}`)
       const payload = data.data ?? data
       const msgs = payload?.messages ?? payload
-      setMessages(Array.isArray(msgs) ? msgs : [])
+      setMessages(Array.isArray(msgs) ? msgs.sort((a: Message, b: Message) => 
+  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+) : [])
     } catch {
       setMessages([])
     }
