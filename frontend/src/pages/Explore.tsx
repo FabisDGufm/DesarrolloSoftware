@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { PostCard } from '../components/PostCard'
 
-interface SearchResult {
+interface Item {
   authorId: number
   postId: string
   text: string
   imageUrl?: string | null
   createdAt: string
   authorName?: string
-  type?: 'post' | 'news' | 'announcement'
+  type?: 'normal' | 'news' | 'announcement'
 }
 
 type Tab = 'posts' | 'news' | 'announcements'
@@ -17,10 +17,12 @@ type Tab = 'posts' | 'news' | 'announcements'
 export function Explore() {
   const [tab, setTab] = useState<Tab>('posts')
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [results, setResults] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
 
-  // 🔥 RESET AL CAMBIAR TAB
+  const [showModal, setShowModal] = useState(false)
+  const [announcementText, setAnnouncementText] = useState('')
+
   useEffect(() => {
     setResults([])
     setQuery('')
@@ -34,7 +36,6 @@ export function Explore() {
     }
   }, [tab])
 
-  // 🔎 SEARCH SOLO POSTS
   useEffect(() => {
     if (tab !== 'posts') return
 
@@ -44,20 +45,17 @@ export function Explore() {
     }
 
     const timeout = setTimeout(() => {
-      handleSearch()
+      searchPosts()
     }, 400)
 
     return () => clearTimeout(timeout)
   }, [query, tab])
 
-  const handleSearch = async () => {
-    if (!query.trim()) return
-
+  const searchPosts = async () => {
     setLoading(true)
-
     try {
       const { data } = await api.get('/api/explore/search', {
-        params: { q: query.trim() },
+        params: { q: query }
       })
 
       setResults(Array.isArray(data.data) ? data.data : [])
@@ -68,10 +66,8 @@ export function Explore() {
     }
   }
 
-  // 📰 NEWS (Prensa Libre / RSS backend)
   const loadNews = async () => {
     setLoading(true)
-
     try {
       const { data } = await api.get('/api/news/guatemala')
       setResults(Array.isArray(data.data) ? data.data : [])
@@ -82,12 +78,10 @@ export function Explore() {
     }
   }
 
-  // 📢 ANNOUNCEMENTS
   const loadAnnouncements = async () => {
     setLoading(true)
-
     try {
-      const { data } = await api.get('/api/announcements')
+      const { data } = await api.get('/api/explore/announcements')
       setResults(Array.isArray(data.data) ? data.data : [])
     } catch {
       setResults([])
@@ -96,70 +90,93 @@ export function Explore() {
     }
   }
 
-  const handleTab = (newTab: Tab) => {
-    setTab(newTab)
+  const createAnnouncement = async () => {
+    if (!announcementText.trim()) return
+
+    setLoading(true)
+
+    try {
+      const { data } = await api.post('/api/posts', {
+        text: announcementText,
+        type: 'announcement'
+      })
+
+      setAnnouncementText('')
+      setShowModal(false)
+
+      if (tab === 'announcements') {
+        loadAnnouncements()
+      }
+    } catch {
+      setLoading(false)
+    }
   }
 
   return (
     <>
-      {/* HEADER */}
       <div className="page-header">
-        <div className="search-bar" style={{ marginBottom: 10 }}>
+        <div className="search-bar">
           <span className="search-icon">🔍</span>
           <input
             type="text"
-            placeholder="Buscar posts..."
+            placeholder="Buscar"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={tab !== 'posts'}
           />
         </div>
 
-        {/* TABS */}
         <div className="page-tabs">
           <button
-            className={`page-tab ${tab === 'posts' ? 'active' : ''}`}
-            onClick={() => handleTab('posts')}
+            className={tab === 'posts' ? 'active' : ''}
+            onClick={() => setTab('posts')}
           >
             Posts
           </button>
 
           <button
-            className={`page-tab ${tab === 'news' ? 'active' : ''}`}
-            onClick={() => handleTab('news')}
+            className={tab === 'news' ? 'active' : ''}
+            onClick={() => setTab('news')}
           >
             Noticias
           </button>
 
           <button
-            className={`page-tab ${tab === 'announcements' ? 'active' : ''}`}
-            onClick={() => handleTab('announcements')}
+            className={tab === 'announcements' ? 'active' : ''}
+            onClick={() => setTab('announcements')}
           >
             Anuncios
           </button>
         </div>
       </div>
 
-      {/* CONTENT */}
+      {tab === 'announcements' && (
+        <div>
+          <button onClick={() => setShowModal(true)}>
+            Publicar anuncio
+          </button>
+        </div>
+      )}
+
+      {showModal && (
+        <div>
+          <textarea
+            value={announcementText}
+            onChange={(e) => setAnnouncementText(e.target.value)}
+          />
+          <button onClick={createAnnouncement}>
+            Publicar
+          </button>
+          <button onClick={() => setShowModal(false)}>
+            Cancelar
+          </button>
+        </div>
+      )}
+
       {loading ? (
-        <div className="loading-spinner">
-          <div className="spinner" />
-        </div>
+        <div>Cargando...</div>
       ) : results.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">
-            {tab === 'posts'
-              ? 'Busca posts'
-              : tab === 'news'
-              ? 'No hay noticias'
-              : 'No hay anuncios'}
-          </div>
-          <p>
-            {tab === 'posts'
-              ? 'Escribe algo para buscar'
-              : 'Intenta más tarde'}
-          </p>
-        </div>
+        <div>Sin resultados</div>
       ) : (
         results.map((r) => (
           <PostCard
