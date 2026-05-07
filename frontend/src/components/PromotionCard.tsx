@@ -48,7 +48,7 @@ export function PromotionCard({
           }}
         >
           <img
-            src={imageUrl}
+            src={`${import.meta.env.VITE_S3_BASE_URL}/${imageUrl}`}
             alt={title}
             style={{
               width: '100%',

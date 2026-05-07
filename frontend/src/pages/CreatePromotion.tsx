@@ -163,7 +163,7 @@ export function CreatePromotion() {
             </button>
 
             <div className="page-title">
-              Crear emprendimiento
+              Publicar tu emprendimiento
             </div>
           </div>
 

@@ -87,7 +87,7 @@ export function Layout() {
                 background: 'var(--accent)',
               }}
             >
-              Emprender
+              Promocionate
             </button>
           </>
         )}
