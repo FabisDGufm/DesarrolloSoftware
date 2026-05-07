@@ -32,27 +32,58 @@ export function Home() {
     loadFeed()
   }, [tab])
 
+  /* =========================
+     FEED LOGIC (FIX REAL)
+  ========================= */
   const loadFeed = async () => {
     setLoading(true)
 
     try {
-      let endpoint = '/api/posts/social-feed'
+      let data: Post[] = []
 
+      // =========================
+      // FOLLOWING (FRIENDS ONLY)
+      // =========================
       if (tab === 'following') {
-        endpoint = '/api/posts/following-feed' // 🔥 NUEVO ENDPOINT
+        // 1. obtener amigos aceptados
+        const friendsRes = await api.get(
+          `/api/user-relations/${user?.id}/friends`
+        )
+
+        const friendIds: number[] =
+          friendsRes.data.data || friendsRes.data || []
+
+        // 2. incluir al usuario mismo (opcional)
+        const authorIds = [user?.id, ...friendIds]
+
+        // 3. obtener posts de esos usuarios
+        const postsRes = await api.post('/api/posts/by-authors', {
+          authorIds,
+        })
+
+        data = postsRes.data.data || postsRes.data || []
       }
 
-      const { data } = await api.get(endpoint)
-      const feedData = data.data || data
+      // =========================
+      // FOR YOU + UNIVERSITY
+      // =========================
+      else {
+        const res = await api.get('/api/posts/social-feed')
+        data = res.data.data || res.data || []
+      }
 
-      setPosts(Array.isArray(feedData) ? feedData : [])
-    } catch {
+      setPosts(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('feed error', err)
       setPosts([])
     } finally {
       setLoading(false)
     }
   }
 
+  /* =========================
+     IMAGE HANDLING
+  ========================= */
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !file.type.startsWith('image/')) return
@@ -70,6 +101,9 @@ export function Home() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  /* =========================
+     CREATE POST
+  ========================= */
   const handlePublish = async () => {
     if (!isAuthenticated || (!composeText.trim() && !composeFile)) return
 
@@ -79,9 +113,12 @@ export function Home() {
       let imageUrl: string | undefined
 
       if (composeFile) {
-        const { data: uploadData } = await api.get('/api/posts/upload-url', {
-          params: { fileName: composeFile.name },
-        })
+        const { data: uploadData } = await api.get(
+          '/api/posts/upload-url',
+          {
+            params: { fileName: composeFile.name },
+          }
+        )
 
         const { url, key } = uploadData.data
 
@@ -102,14 +139,16 @@ export function Home() {
       setComposeText('')
       removeImage()
       loadFeed()
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error(err)
     } finally {
       setPublishing(false)
     }
   }
 
-  // FILTERS
+  /* =========================
+     FILTER UNIVERSITY
+  ========================= */
   const filteredPosts =
     tab === 'university'
       ? posts.filter(
@@ -119,6 +158,9 @@ export function Home() {
         )
       : posts
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <>
       <div className="page-header">
@@ -166,7 +208,10 @@ export function Home() {
             {composePreview && (
               <div className="compose-image-preview">
                 <img src={composePreview} alt="preview" />
-                <button className="compose-image-remove" onClick={removeImage}>
+                <button
+                  className="compose-image-remove"
+                  onClick={removeImage}
+                >
                   X
                 </button>
               </div>
