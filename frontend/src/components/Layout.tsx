@@ -1,9 +1,83 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import { useState, useEffect } from 'react'
+import { api } from '../services/api'
+
+interface SuggestedUser {
+  id: number
+  name: string
+  university?: string
+}
 
 function Avatar({ name, size }: { name?: string; size?: string }) {
   const letter = (name || '?')[0]!.toUpperCase()
   return <div className={`avatar ${size || ''}`}>{letter}</div>
+}
+
+function ConnectPanel({ currentUserId }: { currentUserId?: string }) {
+  const [allUsers, setAllUsers] = useState<SuggestedUser[]>([])
+  const [displayed, setDisplayed] = useState<SuggestedUser[]>([])
+  const [progress, setProgress] = useState(0)
+  const [sent, setSent] = useState<number[]>([])
+
+  const pickRandom = (arr: SuggestedUser[], n: number) => {
+    const shuffled = [...arr].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, n)
+  }
+
+  useEffect(() => {
+    api.get('/api/users').then(({ data }) => {
+      const users = (data.data || []).filter((u: SuggestedUser) => u.id !== Number(currentUserId))
+      setAllUsers(users)
+      setDisplayed(pickRandom(users, 3))
+    }).catch(() => {})
+  }, [currentUserId])
+
+  useEffect(() => {
+    if (allUsers.length === 0) return
+    const interval = setInterval(() => {
+      setProgress(p => {
+        if (p >= 100) {
+          setDisplayed(pickRandom(allUsers, 3))
+          return 0
+        }
+        return p + 2
+      })
+    }, 100)
+    return () => clearInterval(interval)
+  }, [allUsers])
+
+  const handleSend = async (targetId: number) => {
+    try {
+      await api.post(`/api/user-relations/${currentUserId}/friend-request/${targetId}`)
+      setSent(prev => [...prev, targetId])
+    } catch {
+      setSent(prev => [...prev, targetId])
+    }
+  }
+
+  return (
+    <div className="who-to-follow">
+      <div className="who-to-follow-title">Conecta</div>
+      <div style={{ height: 3, background: 'var(--border-color)', borderRadius: 2, margin: '4px 0 12px' }}>
+        <div style={{ height: '100%', width: `${progress}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.1s linear' }} />
+      </div>
+      {displayed.map((u) => (
+        <div key={u.id} className="follow-suggestion">
+          <Avatar name={u.name} size="avatar-lg" />
+          <div className="follow-suggestion-info">
+            <div className="follow-suggestion-name">{u.name}</div>
+            <div className="follow-suggestion-handle">{u.university || 'Universidad'}</div>
+          </div>
+          {sent.includes(u.id) ? (
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Enviado ✓</span>
+          ) : (
+            <button className="btn-follow follow" onClick={() => handleSend(u.id)}>Agregar</button>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export function Layout() {
@@ -17,7 +91,6 @@ export function Layout() {
 
   return (
     <div className="app-layout">
-      {/* Sidebar */}
       <nav className="sidebar">
         <div className="sidebar-logo">
           El <span className="sidebar-logo-accent">Pasillo</span>
@@ -27,49 +100,40 @@ export function Layout() {
             <span className="nav-icon">&#9750;</span>
             <span>Inicio</span>
           </NavLink>
-
           <NavLink to="/explore" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9906;</span>
             <span>Explorar</span>
           </NavLink>
-
           <NavLink to="/amigos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-  <span className="nav-icon">&#128101;</span>
-  <span>Amigos</span>
-</NavLink>
-
+            <span className="nav-icon">&#128101;</span>
+            <span>Amigos</span>
+          </NavLink>
           <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9883;</span>
             <span>Mensajes</span>
           </NavLink>
-
           <NavLink to="/ayuda" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9998;</span>
             <span>Ayuda</span>
           </NavLink>
-
           <NavLink to="/reportar" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9888;</span>
             <span>Reportar</span>
           </NavLink>
-
           {(user?.role ?? 0) >= 1 && (
             <NavLink to="/moderacion" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">&#9632;</span>
               <span>Moderacion</span>
             </NavLink>
           )}
-
           <NavLink to="/debates" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#128172;</span>
             <span>Sin Filtro</span>
           </NavLink>
-
           <NavLink to="/promotions" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#128717;</span>
             <span>Emprendimientos</span>
           </NavLink>
-
           {isAuthenticated && (
             <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-icon">&#9673;</span>
@@ -83,15 +147,7 @@ export function Layout() {
             <button className="sidebar-post-btn" onClick={() => navigate('/create-post')}>
               Publicar
             </button>
-
-            <button
-              className="sidebar-post-btn"
-              onClick={() => navigate('/create-promotion')}
-              style={{
-                marginTop: 10,
-                background: 'var(--accent)',
-              }}
-            >
+            <button className="sidebar-post-btn" onClick={() => navigate('/create-promotion')} style={{ marginTop: 10, background: 'var(--accent)' }}>
               Promocionate
             </button>
           </>
@@ -115,12 +171,10 @@ export function Layout() {
         )}
       </nav>
 
-      {/* Main content */}
       <main className="main-content">
         <Outlet />
       </main>
 
-      {/* Right panel */}
       <aside className="right-panel">
         <div className="search-bar">
           <span className="search-icon">&#9906;</span>
@@ -129,19 +183,16 @@ export function Layout() {
 
         <div className="trending-card">
           <div className="trending-card-title">En el pasillo</div>
-
           <div className="trending-item">
             <div className="trending-item-category">Guatemala</div>
             <div className="trending-item-name">Vida Universitaria</div>
             <div className="trending-item-count">1,234 posts</div>
           </div>
-
           <div className="trending-item">
             <div className="trending-item-category">Academico</div>
             <div className="trending-item-name">Examenes Finales</div>
             <div className="trending-item-count">890 posts</div>
           </div>
-
           <div className="trending-item">
             <div className="trending-item-category">Tech</div>
             <div className="trending-item-name">Desarrollo de Software</div>
@@ -149,36 +200,7 @@ export function Layout() {
           </div>
         </div>
 
-        <div className="who-to-follow">
-          <div className="who-to-follow-title">Conecta</div>
-
-          <div className="follow-suggestion">
-            <Avatar name="M" size="avatar-lg" />
-            <div className="follow-suggestion-info">
-              <div className="follow-suggestion-name">Maria Lopez</div>
-              <div className="follow-suggestion-handle">Ingenieria - UFM</div>
-            </div>
-            <button className="btn-follow follow">Seguir</button>
-          </div>
-
-          <div className="follow-suggestion">
-            <Avatar name="C" size="avatar-lg" />
-            <div className="follow-suggestion-info">
-              <div className="follow-suggestion-name">Carlos Ruiz</div>
-              <div className="follow-suggestion-handle">Derecho - URL</div>
-            </div>
-            <button className="btn-follow follow">Seguir</button>
-          </div>
-
-          <div className="follow-suggestion">
-            <Avatar name="A" size="avatar-lg" />
-            <div className="follow-suggestion-info">
-              <div className="follow-suggestion-name">Ana Castillo</div>
-              <div className="follow-suggestion-handle">Medicina - USAC</div>
-            </div>
-            <button className="btn-follow follow">Seguir</button>
-          </div>
-        </div>
+        {isAuthenticated && <ConnectPanel currentUserId={user?.id} />}
       </aside>
     </div>
   )
