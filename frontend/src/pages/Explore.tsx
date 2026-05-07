@@ -23,10 +23,12 @@ interface AnnouncementItem {
 }
 
 interface NewsItem {
-  title: string
-  text: string
-  imageUrl?: string | null
-  createdAt: string
+  title?: string
+  description?: string
+  text?: string
+  imageUrl?: string
+  url?: string
+  publishedAt?: string
   source?: string
 }
 
@@ -58,22 +60,22 @@ export function Explore() {
   }, [tab])
 
   /* =========================
-     SEARCH POSTS ONLY
+     POSTS SEARCH
   ========================= */
   useEffect(() => {
     if (tab !== 'posts') return
 
     const timeout = setTimeout(() => {
-      if (!query.trim()) loadAllPosts()
-      else searchPosts()
+      if (!query.trim()) {
+        loadAllPosts()
+      } else {
+        searchPosts()
+      }
     }, 300)
 
     return () => clearTimeout(timeout)
   }, [query, tab])
 
-  /* =========================
-     POSTS
-  ========================= */
   const searchPosts = async () => {
     setLoading(true)
     try {
@@ -99,13 +101,23 @@ export function Explore() {
   }
 
   /* =========================
-     NEWS
+     NEWS (SOLO DISPLAY LIMPIO)
   ========================= */
   const loadNews = async () => {
     setLoading(true)
     try {
       const { data } = await api.get('/api/news/guatemala')
-      setResults(Array.isArray(data.data) ? data.data : [])
+
+      const normalized =
+        (data.data || []).map((n: any) => ({
+          title: n.title,
+          description: n.description || n.text,
+          imageUrl: n.imageUrl,
+          url: n.url,
+          publishedAt: n.publishedAt
+        }))
+
+      setResults(normalized)
     } finally {
       setLoading(false)
     }
@@ -147,11 +159,9 @@ export function Explore() {
     }
   }
 
-  /* =========================
-     TYPE GUARDS
-  ========================= */
   const isPost = (r: any): r is PostItem => 'postId' in r
-  const isAnnouncement = (r: any): r is AnnouncementItem => 'announcementId' in r
+  const isAnnouncement = (r: any): r is AnnouncementItem =>
+    'announcementId' in r
   const isNews = (r: any): r is NewsItem =>
     'title' in r && !('postId' in r) && !('announcementId' in r)
 
@@ -160,7 +170,7 @@ export function Explore() {
   ========================= */
   return (
     <>
-      {/* HEADER */}
+      {/* HEADER (IDÉNTICO AL TUYO) */}
       <div className="page-header">
 
         {tab === 'posts' && (
@@ -199,7 +209,7 @@ export function Explore() {
         </div>
       </div>
 
-      {/* BUTTON */}
+      {/* BOTÓN ANUNCIOS */}
       {tab === 'announcements' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 0' }}>
           <button
@@ -212,10 +222,10 @@ export function Explore() {
         </div>
       )}
 
-      {/* MODAL (FIX: showModal sí se usa aquí → elimina warning) */}
+      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ borderRadius: '16px', padding: '18px' }}>
             <input
               placeholder="Título del anuncio"
               value={announcementTitle}
@@ -234,13 +244,9 @@ export function Explore() {
               onChange={(e) => setEventDate(e.target.value)}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowModal(false)}>Cancelar</button>
-
-              {/* FIX: createAnnouncement ahora sí se usa */}
-              <button onClick={createAnnouncement}>
-                Publicar
-              </button>
+              <button onClick={createAnnouncement}>Publicar</button>
             </div>
           </div>
         </div>
@@ -256,11 +262,11 @@ export function Explore() {
           <div className="empty-state-title">Sin resultados</div>
         </div>
       ) : (
-        results.map((r, index) => {
+        results.map((r, i) => {
           if (isPost(r)) {
             return (
               <PostCard
-                key={`post-${r.postId}-${index}`}
+                key={`post-${r.authorId}-${r.postId}`}
                 authorId={r.authorId}
                 postId={r.postId}
                 authorName={r.authorName}
@@ -271,33 +277,40 @@ export function Explore() {
             )
           }
 
-          if (isNews(r)) {
+          if (isAnnouncement(r)) {
             return (
-              <div key={`news-${index}`} className="post-card">
+              <div key={`ann-${r.announcementId}`} className="post-card">
                 <h3>{r.title}</h3>
-
-                {r.imageUrl && (
-                  <img
-                    src={r.imageUrl}
-                    style={{ width: '100%', borderRadius: 12, marginTop: 8 }}
-                  />
-                )}
-
                 <p>{r.text}</p>
-
-                <small style={{ color: '#777' }}>
-                  {new Date(r.createdAt).toLocaleString()}
-                </small>
+                {r.eventDate && <small>Fecha: {r.eventDate}</small>}
+                <br />
+                <small>Universidad: {r.university}</small>
               </div>
             )
           }
 
-          if (isAnnouncement(r)) {
+          if (isNews(r)) {
             return (
-              <div key={r.announcementId} className="post-card">
+              <div key={`news-${i}`} className="post-card">
                 <h3>{r.title}</h3>
-                <p>{r.text}</p>
-                {r.eventDate && <small>{r.eventDate}</small>}
+                <p>{r.description}</p>
+
+                {r.imageUrl && (
+                  <img
+                    src={r.imageUrl}
+                    style={{ width: '100%', borderRadius: 12, marginTop: 10 }}
+                  />
+                )}
+
+                {r.url && (
+                  <a href={r.url} target="_blank">
+                    Leer más
+                  </a>
+                )}
+
+                {r.publishedAt && (
+                  <small>{new Date(r.publishedAt).toLocaleString()}</small>
+                )}
               </div>
             )
           }
