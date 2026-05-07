@@ -10,6 +10,7 @@ type PrismaUserRow = {
     email: string;
     name: string | null;
     university: string | null;
+    profilePhoto: string | null;
     createdAt: Date;
     role: number;
     accountStatus: string;
@@ -28,7 +29,7 @@ export class UserRepository {
             role: u.role,
             accountStatus: u.accountStatus,
             suspendedUntil: u.suspendedUntil,
-            profilePhoto: "",
+            profilePhoto: u.profilePhoto ?? "",
             createdAt: u.createdAt,
         };
         const uni = u.university ?? undefined;
@@ -127,8 +128,13 @@ export class UserRepository {
         return this.findById(id);
     }
 
-    async updateProfilePhoto(_id: number, _profilePhoto: string): Promise<User | null> {
-        return this.findById(_id);
+    async updateProfilePhoto(id: number, profilePhoto: string): Promise<User | null> {
+        const user = await prisma.user.update({
+            where: { id },
+            data: { profilePhoto },
+            include: { auth: true },
+        });
+        return this.mapUser(user as PrismaUserRow);
     }
 
     async delete(id: number): Promise<User | null> {

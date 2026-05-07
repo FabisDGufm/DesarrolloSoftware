@@ -19,6 +19,7 @@ model User {
   email String @unique
   name  String?
   university String?
+  profilePhoto String?
 
   createdAt        DateTime  @default(now())
   /// 0 = usuario, 1 = moderador, 2 = admin
