@@ -83,11 +83,28 @@ function ConnectPanel({ currentUserId }: { currentUserId?: number }) {
 export function Layout() {
   const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
+  const [pendingRequests, setPendingRequests] = useState(0)
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
+
+  useEffect(() => {
+    if (!user) return
+    const check = async () => {
+      try {
+        const { data } = await api.get(`/api/user-relations/${Number(user.id)}/friend-requests/received`)
+        const requests = data.data || data || []
+        setPendingRequests(requests.length)
+      } catch (_e) {
+  console.error(_e)
+}
+    }
+    check()
+    const interval = setInterval(check, 10000)
+    return () => clearInterval(interval)
+  }, [user])
 
   return (
     <div className="app-layout">
@@ -107,6 +124,22 @@ export function Layout() {
           <NavLink to="/amigos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#128101;</span>
             <span>Amigos</span>
+            {pendingRequests > 0 && (
+              <span style={{
+                background: 'red',
+                color: 'white',
+                borderRadius: '50%',
+                fontSize: 11,
+                width: 18,
+                height: 18,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: 6,
+                fontWeight: 700,
+                animation: 'pulse 1.5s infinite'
+              }}>{pendingRequests}</span>
+            )}
           </NavLink>
           <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9883;</span>
