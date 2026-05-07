@@ -65,9 +65,9 @@ export function Home() {
     try {
       let imageUrl: string | undefined
       if (composeFile) {
-        const { data: uploadData } = await api.get('/api/feed/upload-url', {
-          params: { fileName: composeFile.name },
-        })
+        const { data: uploadData } = await api.get('/api/posts/upload-url', {
+  params: { fileName: composeFile.name },
+})
         const { url, key } = uploadData.data
         await fetch(url, {
           method: 'PUT',
@@ -76,7 +76,7 @@ export function Home() {
         })
         imageUrl = key
       }
-      await api.post('/api/feed', { text: composeText.trim(), imageUrl })
+      await api.post('/api/posts', { text: composeText.trim(), imageUrl })
       setComposeText('')
       removeImage()
       loadFeed()
