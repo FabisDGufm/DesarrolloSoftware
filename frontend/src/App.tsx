@@ -14,6 +14,7 @@ import { Debates } from './pages/Debates'
 import { Promotions } from './pages/Promotions'
 import { CreatePromotion } from './pages/CreatePromotion'
 import { Friends } from './pages/Friends'
+import { SavedPosts } from './pages/SavedPosts'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/explore" element={<Explore />} />
+        <Route path="/guardados" element={<SavedPosts />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/ayuda" element={<AcademicHelp />} />
         <Route path="/reportar" element={<ReportContent />} />

@@ -1,5 +1,6 @@
 import { PostInteractionService } from '../../services/post-interaction-service.js';
 import type { PostInteractionRepository } from '../../repositories/post-interaction-repository.js';
+import type { PostRepository } from '../../repositories/post-repository.js';
 import { jest } from '@jest/globals';
 
 describe('PostInteractionService', () => {
@@ -48,7 +49,10 @@ describe('PostInteractionService', () => {
             recordRepost: jest.fn(),
             countReposts: jest.fn(),
         };
-        service = new PostInteractionService(repo as unknown as PostInteractionRepository);
+        service = new PostInteractionService(
+            repo as unknown as PostInteractionRepository,
+            { findById: jest.fn() } as unknown as PostRepository
+        );
     });
 
     it('like calls repository', async () => {

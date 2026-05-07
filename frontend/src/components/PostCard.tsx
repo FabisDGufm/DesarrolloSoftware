@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 
@@ -51,6 +51,9 @@ export function PostCard({
   const { isAuthenticated } = useAuthStore()
   const [liked, setLiked] = useState(false)
   const [likes, setLikes] = useState(likesCount)
+  const [reposts, setReposts] = useState(repostsCount)
+  const [hint, setHint] = useState<string | null>(null)
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [saved, setSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [comments, setComments] = useState<ApiComment[]>([])
@@ -64,6 +67,22 @@ export function PostCard({
   useEffect(() => {
     setCommentCount(commentsCount)
   }, [commentsCount])
+
+  useEffect(() => {
+    setReposts(repostsCount)
+  }, [repostsCount])
+
+  useEffect(() => {
+    return () => {
+      if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    }
+  }, [])
+
+  const showHint = (msg: string) => {
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    setHint(msg)
+    hintTimerRef.current = setTimeout(() => setHint(null), 2800)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -192,8 +211,10 @@ export function PostCard({
         `/api/interactions/posts/${authorId}/${postId}/repost`,
         interactionBody
       )
+      setReposts((n) => n + 1)
+      showHint('Republicacion registrada')
     } catch {
-      /* ignore */
+      showHint('No se pudo republicar')
     }
   }
 
@@ -205,8 +226,35 @@ export function PostCard({
         `/api/interactions/posts/${authorId}/${postId}/share`,
         interactionBody
       )
+      const snippet =
+        text.trim().slice(0, 200) || 'Mira esto en El Pasillo'
+      const origin = window.location.origin
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: 'El Pasillo',
+            text: snippet,
+            url: origin,
+          })
+          showHint('Compartido')
+          return
+        } catch (err: unknown) {
+          if (
+            err instanceof DOMException &&
+            err.name === 'AbortError'
+          ) {
+            return
+          }
+        }
+      }
+      if (typeof navigator.clipboard?.writeText === 'function') {
+        await navigator.clipboard.writeText(`${snippet}\n${origin}`)
+        showHint('Copiado al portapapeles')
+      } else {
+        showHint('Compartido')
+      }
     } catch {
-      /* ignore */
+      showHint('No se pudo compartir')
     }
   }
 
@@ -257,18 +305,28 @@ export function PostCard({
           <button
             type="button"
             className="post-action comment"
+            data-tooltip="Comentar"
+            aria-label="Comentar"
             onClick={toggleComments}
           >
             <span className="action-icon">&#128172;</span>
             {commentCount > 0 && <span>{commentCount}</span>}
           </button>
-          <button className="post-action repost" onClick={handleRepost}>
+          <button
+            type="button"
+            className="post-action repost"
+            data-tooltip="Republicar"
+            aria-label="Republicar"
+            onClick={handleRepost}
+          >
             <span className="action-icon">&#8634;</span>
-            {repostsCount > 0 && <span>{repostsCount}</span>}
+            {reposts > 0 && <span>{reposts}</span>}
           </button>
           <button
             type="button"
             className={`post-action like ${liked ? 'active' : ''}`}
+            data-tooltip={liked ? 'Quitar me gusta' : 'Me gusta'}
+            aria-label={liked ? 'Quitar me gusta' : 'Me gusta'}
             onClick={handleLike}
           >
             <span className="action-icon">{liked ? '\u2665' : '\u2661'}</span>
@@ -277,14 +335,35 @@ export function PostCard({
           <button
             type="button"
             className={`post-action save ${saved ? 'active' : ''}`}
+            data-tooltip={saved ? 'Quitar de guardados' : 'Guardar'}
+            aria-label={saved ? 'Quitar de guardados' : 'Guardar'}
             onClick={handleSave}
           >
             <span className="action-icon">{saved ? '\u2605' : '\u2606'}</span>
           </button>
-          <button type="button" className="post-action share" onClick={handleShare}>
+          <button
+            type="button"
+            className="post-action share"
+            data-tooltip="Compartir"
+            aria-label="Compartir"
+            onClick={handleShare}
+          >
             <span className="action-icon">&#8599;</span>
           </button>
         </div>
+
+        {hint && (
+          <div
+            role="status"
+            style={{
+              fontSize: 12,
+              color: 'var(--accent)',
+              marginTop: 8,
+            }}
+          >
+            {hint}
+          </div>
+        )}
 
         {commentsOpen && (
           <div
