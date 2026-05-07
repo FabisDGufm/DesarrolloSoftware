@@ -25,6 +25,7 @@ export function Friends() {
   const [tab, setTab] = useState<'discover' | 'requests' | 'friends'>('discover')
   const [sending, setSending] = useState<number | null>(null)
   const [search, setSearch] = useState('')
+  const [sentRequests, setSentRequests] = useState<number[]>([])
 
   useEffect(() => {
     loadAll()
@@ -33,14 +34,23 @@ export function Friends() {
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [usersRes, requestsRes, friendsRes] = await Promise.all([
+      const [usersRes, requestsRes, friendsRes, sentRes] = await Promise.all([
         api.get('/api/users'),
         api.get(`/api/user-relations/${user?.id}/friend-requests/received`),
         api.get(`/api/user-relations/${user?.id}/friends`),
+        api.get(`/api/user-relations/${user?.id}/friend-requests/sent`),
       ])
-      setUsers((usersRes.data.data || []).filter((u: User) => u.id !== Number(user?.id)))
+
+      const allUsers: User[] = usersRes.data.data || []
+      setUsers(allUsers.filter((u: User) => u.id !== Number(user?.id)))
       setRequests(requestsRes.data.data || requestsRes.data || [])
-      setFriends(friendsRes.data.data || friendsRes.data || [])
+
+      const friendIds: number[] = friendsRes.data.data || friendsRes.data || []
+      const friendUsers = allUsers.filter((u: User) => friendIds.includes(u.id))
+      setFriends(friendUsers)
+
+      const sentIds = (sentRes.data.data || sentRes.data || []).map((r: FriendRequest) => r.receiverId)
+      setSentRequests(sentIds)
     } catch (e) {
       console.error(e)
     } finally {
@@ -52,7 +62,7 @@ export function Friends() {
     setSending(targetId)
     try {
       await api.post(`/api/user-relations/${user?.id}/friend-request/${targetId}`)
-      loadAll()
+      setSentRequests(prev => [...prev, targetId])
     } catch (e) {
       console.error(e)
     } finally {
@@ -79,6 +89,7 @@ export function Friends() {
   }
 
   const isFriend = (id: number) => friends.some((f) => f.id === id)
+  const hasSentRequest = (id: number) => sentRequests.includes(id)
 
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -124,6 +135,8 @@ export function Friends() {
               </div>
               {isFriend(u.id) ? (
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Amigos ✓</span>
+              ) : hasSentRequest(u.id) ? (
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Enviado ✓</span>
               ) : (
                 <button className="btn-follow follow" onClick={() => sendRequest(u.id)} disabled={sending === u.id}>
                   {sending === u.id ? '...' : 'Agregar'}
