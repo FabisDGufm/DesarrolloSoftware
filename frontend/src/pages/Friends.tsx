@@ -31,12 +31,7 @@ export function Friends() {
     loadAll()
   }, [])
 
-  useEffect(() => {
-  const interval = setInterval(() => {
-    loadAll()
-  }, 1000)
-  return () => clearInterval(interval)
-}, [])
+  
 
   const loadAll = async () => {
     setLoading(true)
