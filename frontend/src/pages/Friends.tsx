@@ -36,9 +36,9 @@ export function Friends() {
     try {
       const [usersRes, requestsRes, friendsRes, sentRes] = await Promise.all([
         api.get('/api/users'),
-        api.get(`/api/user-relations/${user?.id}/friend-requests/received`),
-        api.get(`/api/user-relations/${user?.id}/friends`),
-        api.get(`/api/user-relations/${user?.id}/friend-requests/sent`),
+        api.get(`/api/user-relations/${Number(user?.id)}/friend-requests/received`),
+api.get(`/api/user-relations/${Number(user?.id)}/friends`),
+api.get(`/api/user-relations/${Number(user?.id)}/friend-requests/sent`),
       ])
 
       const allUsers: User[] = usersRes.data.data || []
@@ -61,7 +61,7 @@ export function Friends() {
   const sendRequest = async (targetId: number) => {
     setSending(targetId)
     try {
-      await api.post(`/api/user-relations/${user?.id}/friend-request/${targetId}`)
+      await api.post(`/api/user-relations/${Number(user?.id)}/friend-request/${targetId}`)
       setSentRequests(prev => [...prev, targetId])
     } catch (e) {
       console.error(e)
