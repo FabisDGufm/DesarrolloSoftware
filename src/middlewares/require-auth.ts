@@ -2,8 +2,13 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../utils/custom-errors.js';
 import type { AuthJwtPayload } from '../types/auth-jwt.js';
+import { userRepository } from '../services/instances.js';
 
-export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
+export async function requireAuth(
+    req: Request,
+    _res: Response,
+    next: NextFunction
+): Promise<void> {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -35,10 +40,16 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
             return;
         }
 
+        const user = await userRepository.findById(userId);
+
+        if (!user) {
+            next(new UnauthorizedError('User not found'));
+            return;
+        }
+
         req.userId = userId;
 
-        // 🔥 NUEVO
-        (req as any).user = decoded;
+        (req as any).user = user;
 
         next();
     } catch {
@@ -47,7 +58,11 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 }
 
 /** Sets `req.userId` when a valid Bearer token is sent; otherwise continues without it. */
-export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+export async function optionalAuth(
+    req: Request,
+    _res: Response,
+    next: NextFunction
+): Promise<void> {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -67,18 +82,19 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
     try {
         const decoded = jwt.verify(token, secret) as AuthJwtPayload;
 
-        const sub = decoded.sub;
+        const sub =
+            typeof decoded.sub === 'number'
+                ? decoded.sub
+                : Number(decoded.sub);
 
-        const userId =
-            typeof sub === 'number'
-                ? sub
-                : Number(sub);
+        if (Number.isFinite(sub) && sub >= 1) {
+            req.userId = sub;
 
-        if (Number.isFinite(userId) && userId >= 1) {
-            req.userId = userId;
+            const user = await userRepository.findById(sub);
 
-            // 🔥 NUEVO
-            (req as any).user = decoded;
+            if (user) {
+                (req as any).user = user;
+            }
         }
     } catch {
         /* invalid token on optional route — ignore */
