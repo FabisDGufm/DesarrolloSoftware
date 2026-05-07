@@ -18,10 +18,10 @@ export function Explore() {
   const [tab, setTab] = useState<Tab>('posts')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
-  const [searching, setSearching] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  // 🔥 RESET TOTAL al cambiar tab (evita “sticky results”)
+  // 🔥 RESET TOTAL al cambiar tab (evita bugs de “sticky posts”)
   useEffect(() => {
     setResults([])
     setQuery('')
@@ -30,9 +30,16 @@ export function Explore() {
     if (tab === 'news') {
       loadNews()
     }
+
+    if (tab === 'announcements') {
+      loadAnnouncements()
+    }
   }, [tab])
 
+  // 🔎 SEARCH POSTS ONLY
   useEffect(() => {
+    if (tab !== 'posts') return
+
     if (!query.trim()) {
       setResults([])
       setHasSearched(false)
@@ -44,13 +51,12 @@ export function Explore() {
     }, 400)
 
     return () => clearTimeout(timeout)
-  }, [query])
+  }, [query, tab])
 
-  // 🔎 SEARCH POSTS
   const handleSearch = async () => {
     if (!query.trim()) return
 
-    setSearching(true)
+    setLoading(true)
     setHasSearched(true)
 
     try {
@@ -62,13 +68,13 @@ export function Explore() {
     } catch {
       setResults([])
     } finally {
-      setSearching(false)
+      setLoading(false)
     }
   }
 
-  // 📰 NEWS (RSS / Prensa Libre backend)
+  // 📰 NEWS (Prensa Libre backend)
   const loadNews = async () => {
-    setSearching(true)
+    setLoading(true)
     setHasSearched(true)
 
     try {
@@ -77,68 +83,63 @@ export function Explore() {
     } catch {
       setResults([])
     } finally {
-      setSearching(false)
+      setLoading(false)
     }
   }
 
-  // 📢 ANNOUNCEMENTS (vacío backend por ahora)
+  // 📢 ANNOUNCEMENTS
   const loadAnnouncements = async () => {
-    setSearching(true)
+    setLoading(true)
     setHasSearched(true)
 
     try {
-      const { data } = await api.get('/api/explore/announcements')
+      const { data } = await api.get('/api/announcements')
       setResults(Array.isArray(data.data) ? data.data : [])
     } catch {
       setResults([])
     } finally {
-      setSearching(false)
+      setLoading(false)
     }
   }
 
-  const handleTabClick = (t: Tab) => {
-    setTab(t)
-
-    if (t === 'announcements') {
-      loadAnnouncements()
-    }
+  const handleTab = (newTab: Tab) => {
+    setTab(newTab)
   }
 
   return (
     <>
       {/* HEADER */}
       <div className="page-header">
-        <div style={{ padding: '8px 0' }}>
-          <div className="search-bar">
-            <span className="search-icon">&#128269;</span>
-            <input
-              type="text"
-              placeholder="Buscar en El Pasillo..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
+        <div className="search-bar" style={{ marginBottom: 10 }}>
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar posts..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            disabled={tab !== 'posts'}
+          />
         </div>
 
         {/* SOLO 3 TABS */}
         <div className="page-tabs">
           <button
             className={`page-tab ${tab === 'posts' ? 'active' : ''}`}
-            onClick={() => handleTabClick('posts')}
+            onClick={() => handleTab('posts')}
           >
             Posts
           </button>
 
           <button
             className={`page-tab ${tab === 'news' ? 'active' : ''}`}
-            onClick={() => handleTabClick('news')}
+            onClick={() => handleTab('news')}
           >
             Noticias
           </button>
 
           <button
             className={`page-tab ${tab === 'announcements' ? 'active' : ''}`}
-            onClick={() => handleTabClick('announcements')}
+            onClick={() => handleTab('announcements')}
           >
             Anuncios
           </button>
@@ -146,36 +147,37 @@ export function Explore() {
       </div>
 
       {/* CONTENT */}
-      {hasSearched ? (
-        searching ? (
-          <div className="loading-spinner">
-            <div className="spinner" />
-          </div>
-        ) : results.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-title">Sin resultados</div>
-            <p>No hay contenido disponible</p>
-          </div>
-        ) : (
-          results.map((r) => (
-            <PostCard
-              key={`${r.authorId}-${r.postId}`}
-              authorId={r.authorId}
-              postId={r.postId}
-              authorName={r.authorName}
-              text={r.text}
-              imageUrl={r.imageUrl}
-              createdAt={r.createdAt}
-            />
-          ))
-        )
-      ) : (
+      {loading ? (
+        <div className="loading-spinner">
+          <div className="spinner" />
+        </div>
+      ) : results.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-title">
-            Explora contenido en El Pasillo
+            {tab === 'posts'
+              ? 'Busca posts'
+              : tab === 'news'
+              ? 'No hay noticias'
+              : 'No hay anuncios'}
           </div>
-          <p>Busca posts, noticias o anuncios</p>
+          <p>
+            {tab === 'posts'
+              ? 'Escribe algo para buscar'
+              : 'Intenta más tarde'}
+          </p>
         </div>
+      ) : (
+        results.map((r) => (
+          <PostCard
+            key={`${r.authorId}-${r.postId}`}
+            authorId={r.authorId}
+            postId={r.postId}
+            authorName={r.authorName}
+            text={r.text}
+            imageUrl={r.imageUrl}
+            createdAt={r.createdAt}
+          />
+        ))
       )}
     </>
   )
