@@ -36,48 +36,65 @@ export function Home() {
     setLoading(true)
 
     try {
-      let data: any
+      let data: any = []
 
-      // 🔥 POSTS NORMALES
+      // =========================
+      // PARA TI
+      // =========================
       if (tab === 'foryou') {
         const res = await api.get('/api/posts/social-feed')
         data = res.data.data || res.data
       }
 
-      // 🎓 UNIVERSIDAD
+      // =========================
+      // UNIVERSIDAD (YA FUNCIONA)
+      // =========================
       else if (tab === 'university') {
         const res = await api.get('/api/posts/social-feed')
         const feed = res.data.data || res.data
 
         data = Array.isArray(feed)
           ? feed.filter(
-              (p: Post) => p.university && p.university === user?.university
+              (p: Post) =>
+                p.university &&
+                p.university === user?.university
             )
           : []
       }
 
-      
+      // =========================
+      // FOLLOWING (FIX REAL)
+      // =========================
       else if (tab === 'following') {
         // 1. obtener amigos
         const friendsRes = await api.get(
           `/api/user-relations/${user?.id}/friends`
         )
 
-        const friendIds: number[] =
-          friendsRes.data.data || friendsRes.data || []
+        // 🔥 normalizar respuesta (ESTO ES CLAVE)
+        const friendsRaw =
+          friendsRes.data?.data ?? friendsRes.data
 
-        if (!friendIds.length) {
-          setPosts([])
-          setLoading(false)
-          return
+        const friendIds: number[] = Array.isArray(friendsRaw)
+          ? friendsRaw
+          : []
+
+        // 2. si no hay amigos → feed vacío
+        if (friendIds.length === 0) {
+          data = []
+        } else {
+          // 3. traer posts de amigos
+          const postsRes = await api.post(
+            '/api/posts/by-authors',
+            {
+              authorIds: friendIds,
+            }
+          )
+
+          const feed = postsRes.data?.data ?? postsRes.data
+
+          data = Array.isArray(feed) ? feed : []
         }
-
-        // 2. traer posts de esos amigos
-        const postsRes = await api.post('/api/posts/by-authors', {
-          authorIds: friendIds,
-        })
-
-        data = postsRes.data.data || postsRes.data
       }
 
       setPosts(Array.isArray(data) ? data : [])
@@ -115,9 +132,12 @@ export function Home() {
       let imageUrl: string | undefined
 
       if (composeFile) {
-        const { data: uploadData } = await api.get('/api/posts/upload-url', {
-          params: { fileName: composeFile.name },
-        })
+        const { data: uploadData } = await api.get(
+          '/api/posts/upload-url',
+          {
+            params: { fileName: composeFile.name },
+          }
+        )
 
         const { url, key } = uploadData.data
 
@@ -145,26 +165,33 @@ export function Home() {
 
   return (
     <>
+      {/* HEADER */}
       <div className="page-header">
         <div className="page-title">Inicio</div>
 
         <div className="page-tabs">
           <button
-            className={`page-tab ${tab === 'foryou' ? 'active' : ''}`}
+            className={`page-tab ${
+              tab === 'foryou' ? 'active' : ''
+            }`}
             onClick={() => setTab('foryou')}
           >
             Para ti
           </button>
 
           <button
-            className={`page-tab ${tab === 'university' ? 'active' : ''}`}
+            className={`page-tab ${
+              tab === 'university' ? 'active' : ''
+            }`}
             onClick={() => setTab('university')}
           >
             Tu Universidad
           </button>
 
           <button
-            className={`page-tab ${tab === 'following' ? 'active' : ''}`}
+            className={`page-tab ${
+              tab === 'following' ? 'active' : ''
+            }`}
             onClick={() => setTab('following')}
           >
             Siguiendo
@@ -190,7 +217,10 @@ export function Home() {
             {composePreview && (
               <div className="compose-image-preview">
                 <img src={composePreview} alt="preview" />
-                <button className="compose-image-remove" onClick={removeImage}>
+                <button
+                  className="compose-image-remove"
+                  onClick={removeImage}
+                >
                   X
                 </button>
               </div>
