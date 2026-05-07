@@ -129,21 +129,21 @@ export function Explore() {
 
         <div className="page-tabs">
           <button
-            className={tab === 'posts' ? 'active' : ''}
+            className={`page-tab ${tab === 'posts' ? 'active' : ''}`}
             onClick={() => setTab('posts')}
           >
             Posts
           </button>
 
           <button
-            className={tab === 'news' ? 'active' : ''}
+            className={`page-tab ${tab === 'news' ? 'active' : ''}`}
             onClick={() => setTab('news')}
           >
             Noticias
           </button>
 
           <button
-            className={tab === 'announcements' ? 'active' : ''}
+            className={`page-tab ${tab === 'announcements' ? 'active' : ''}`}
             onClick={() => setTab('announcements')}
           >
             Anuncios
@@ -152,32 +152,46 @@ export function Explore() {
       </div>
 
       {tab === 'announcements' && (
-        <div>
-          <button onClick={() => setShowModal(true)}>
+        <div style={{ padding: '10px 0' }}>
+          <button
+            className="create-post-btn"
+            onClick={() => setShowModal(true)}
+          >
             Publicar anuncio
           </button>
         </div>
       )}
 
       {showModal && (
-        <div>
-          <textarea
-            value={announcementText}
-            onChange={(e) => setAnnouncementText(e.target.value)}
-          />
-          <button onClick={createAnnouncement}>
-            Publicar
-          </button>
-          <button onClick={() => setShowModal(false)}>
-            Cancelar
-          </button>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <textarea
+              value={announcementText}
+              onChange={(e) => setAnnouncementText(e.target.value)}
+              placeholder="Escribe tu anuncio..."
+            />
+
+            <div className="modal-actions">
+              <button onClick={createAnnouncement}>
+                Publicar
+              </button>
+
+              <button onClick={() => setShowModal(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       {loading ? (
-        <div>Cargando...</div>
+        <div className="loading-spinner">
+          <div className="spinner" />
+        </div>
       ) : results.length === 0 ? (
-        <div>Sin resultados</div>
+        <div className="empty-state">
+          <div className="empty-state-title">Sin resultados</div>
+        </div>
       ) : (
         results.map((r) => (
           <PostCard
