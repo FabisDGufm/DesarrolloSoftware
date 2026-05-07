@@ -110,6 +110,13 @@ export class PostController {
     };
 
     // 🚀 NUEVO (ARREGLADO)
+    getAllPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const posts = await this.service.getAllPosts();
+            res.status(200).json({ status: "success", data: posts });
+        } catch (err) { next(err); }
+    };
+
     getNewsFeed = async (
         req: Request,
         res: Response,

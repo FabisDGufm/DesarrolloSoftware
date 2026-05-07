@@ -91,6 +91,10 @@ export class PostService {
     }
 
     // 🚀 NUEVO: noticias/anuncios
+    async getAllPosts() {
+        return this.repo.findAll();
+    }
+
     async getNewsFeed(userUniversity?: string) {
         const posts: Post[] = await this.repo.findAll();
 

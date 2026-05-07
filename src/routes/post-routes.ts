@@ -15,7 +15,7 @@ router.post("/", requireAuth, enforceModerationPolicy, controller.createPost);
 router.get("/social-feed", controller.getSocialFeed);
 
 router.get("/news", controller.getNewsFeed);
-
+router.get("/", controller.getAllPosts);
 router.get("/user/:authorId", controller.getPostsByUser);
 
 router.get("/:authorId/:postId", optionalAuth, controller.getPost);
