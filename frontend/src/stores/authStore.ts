@@ -5,7 +5,6 @@ interface User {
   id: string
   email: string
   name: string
-  /** 0 usuario, 1 moderador, 2 admin */
   role?: number
   accountStatus?: string
   university?: string

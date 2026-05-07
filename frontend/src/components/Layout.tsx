@@ -14,7 +14,7 @@ function Avatar({ name, size }: { name?: string; size?: string }) {
   return <div className={`avatar ${size || ''}`}>{letter}</div>
 }
 
-function ConnectPanel({ currentUserId }: { currentUserId?: string }) {
+function ConnectPanel({ currentUserId }: { currentUserId?: number }) {
   const [allUsers, setAllUsers] = useState<SuggestedUser[]>([])
   const [displayed, setDisplayed] = useState<SuggestedUser[]>([])
   const [progress, setProgress] = useState(0)
@@ -27,7 +27,7 @@ function ConnectPanel({ currentUserId }: { currentUserId?: string }) {
 
   useEffect(() => {
     api.get('/api/users').then(({ data }) => {
-      const users = (data.data || []).filter((u: SuggestedUser) => u.id !== Number(currentUserId))
+      const users = (data.data || []).filter((u: SuggestedUser) => u.id !== currentUserId)
       setAllUsers(users)
       setDisplayed(pickRandom(users, 3))
     }).catch(() => {})
@@ -200,7 +200,7 @@ export function Layout() {
           </div>
         </div>
 
-        {isAuthenticated && <ConnectPanel currentUserId={user?.id} />}
+        {isAuthenticated && <ConnectPanel currentUserId={Number(user?.id)} />}
       </aside>
     </div>
   )
