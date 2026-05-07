@@ -66,7 +66,7 @@ export function Explore() {
 
       // 🧱 POSTS (explorar general)
       if (selectedTab === 'posts') {
-        url = '/api/explore/browse/posts'
+        url = '/api/explore/browse/post'
       }
 
       // 📰 NOTICIAS (RSS PRIMERO / PRIMAFORMA ORIGINAL)
