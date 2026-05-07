@@ -143,7 +143,7 @@ export function Debates() {
           <div key={debate.debateId} className="post-card">
             <div className="post-header">
               <div className="avatar" style={{ background: '#555', color: '#fff', fontSize: 18 }}>?</div>
-              <div key={debate.debateId} className="post-card" style={{ flexDirection: 'column' }}></div>
+              <div key={debate.debateId} className="post-card" style={{ display: 'flex', flexDirection: 'column' }}></div>
               <div style={{ marginTop: 12, paddingLeft: 16, borderLeft: '2px solid var(--border-color)', maxHeight: 300, overflowY: 'auto' }}></div>
               <div className="post-meta">
                 <span className="post-author">Anónimo</span>
