@@ -20,7 +20,6 @@ function App() {
       {/* Auth pages (no layout) */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/promotions" element={<Promotions />} />
 
       {/* Main app with layout */}
       <Route element={<Layout />}>
@@ -34,8 +33,8 @@ function App() {
         <Route path="/profile/:id" element={<Profile />} />
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/debates" element={<Debates />} />
-        <Route path="/create-promotion" element={<CreatePromotion />}
-/>
+        <Route path="/promotions" element={<Promotions />} />
+        <Route path="/create-promotion" element={<CreatePromotion />} />
       </Route>
     </Routes>
   )
