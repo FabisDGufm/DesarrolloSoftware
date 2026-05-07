@@ -4,6 +4,14 @@ import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 import { PostCard } from '../components/PostCard'
 
+const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || 'https://social-media-ufm-elpasillo.s3.amazonaws.com'
+
+function resolvePhotoUrl(photo?: string): string | undefined {
+  if (!photo) return undefined
+  if (photo.startsWith('http')) return photo
+  return `${S3_BASE_URL}/${photo}`
+}
+
 interface ProfileData {
   id: number
   name: string
@@ -78,7 +86,7 @@ export function Profile() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !user) return
+    if (!file || !user?.id) return
     setUploading(true)
     try {
       const { data: uploadData } = await api.get('/api/users/upload-url', {
@@ -92,8 +100,8 @@ export function Profile() {
       })
       await api.put(`/api/users/${user.id}/profile-photo`, { profilePhoto: key })
       loadProfile()
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error('Error subiendo foto de perfil:', err)
     } finally {
       setUploading(false)
     }
@@ -136,8 +144,8 @@ export function Profile() {
             style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
             title={isOwnProfile ? 'Cambiar foto de perfil' : ''}
           >
-            {profile.profilePhoto ? (
-              <img src={profile.profilePhoto} alt={displayName} />
+            {resolvePhotoUrl(profile.profilePhoto) ? (
+              <img src={resolvePhotoUrl(profile.profilePhoto)} alt={displayName} />
             ) : (
               displayName[0]!.toUpperCase()
             )}
