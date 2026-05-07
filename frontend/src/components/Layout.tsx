@@ -218,21 +218,21 @@ export function Layout() {
 
       <div className="trending-card">
   <div className="trending-card-title">Accesos rapidos</div>
-  <div className="trending-item" onClick={() => navigate('/ayuda')} style={{ cursor: 'pointer' }}>
-    <div className="trending-item-category">Academico</div>
-    <div className="trending-item-name">Ayuda Academica</div>
+  <div className="trending-item" onClick={() => navigate('/ayuda?slug=general')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Ayuda</div>
+    <div className="trending-item-name">General</div>
   </div>
-  <div className="trending-item" onClick={() => navigate('/debates')} style={{ cursor: 'pointer' }}>
-    <div className="trending-item-category">Comunidad</div>
-    <div className="trending-item-name">Sin Filtro</div>
+  <div className="trending-item" onClick={() => navigate('/ayuda?slug=matematicas')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Ayuda</div>
+    <div className="trending-item-name">Matematicas</div>
   </div>
-  <div className="trending-item" onClick={() => navigate('/promotions')} style={{ cursor: 'pointer' }}>
-    <div className="trending-item-category">Negocios</div>
-    <div className="trending-item-name">Emprendimientos</div>
+  <div className="trending-item" onClick={() => navigate('/explore')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Explorar</div>
+    <div className="trending-item-name">Tendencias</div>
   </div>
-  <div className="trending-item" onClick={() => navigate('/amigos')} style={{ cursor: 'pointer' }}>
-    <div className="trending-item-category">Social</div>
-    <div className="trending-item-name">Amigos</div>
+  <div className="trending-item" onClick={() => navigate('/explore')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Explorar</div>
+    <div className="trending-item-name">Universidades</div>
   </div>
 </div>
 

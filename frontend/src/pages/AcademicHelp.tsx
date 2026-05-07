@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
+import { useSearchParams } from 'react-router-dom'
 
 interface SpaceMeta {
   slug: string
@@ -18,6 +19,7 @@ interface HelpMsg {
 
 export function AcademicHelp() {
   const { user } = useAuthStore()
+  const [searchParams] = useSearchParams()
   const [spaces, setSpaces] = useState<SpaceMeta[]>([])
   const [selected, setSelected] = useState<SpaceMeta | null>(null)
   const [messages, setMessages] = useState<HelpMsg[]>([])
@@ -44,6 +46,14 @@ export function AcademicHelp() {
   }, [])
 
   useEffect(() => {
+    const slug = searchParams.get('slug')
+    if (slug && spaces.length > 0) {
+      const space = spaces.find(s => s.slug === slug)
+      if (space) setSelected(space)
+    }
+  }, [spaces, searchParams])
+
+  useEffect(() => {
     if (!selected) return
     const loadMsgs = async () => {
       setLoadingMsgs(true)
@@ -51,9 +61,9 @@ export function AcademicHelp() {
         const { data } = await api.get(`/api/help-spaces/${selected.slug}/messages`)
         const payload = data.data ?? data
         const msgs = payload?.messages ?? payload
-        setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) => 
-  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-) : [])
+        setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        ) : [])
       } catch {
         setMessages([])
       } finally {
@@ -78,9 +88,9 @@ export function AcademicHelp() {
       const { data } = await api.get(`/api/help-spaces/${selected.slug}/messages`)
       const payload = data.data ?? data
       const msgs = payload?.messages ?? payload
-      setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) => 
-  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-) : [])
+      setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      ) : [])
     } catch {
       /* ignore */
     } finally {
@@ -125,23 +135,14 @@ export function AcademicHelp() {
       </div>
 
       {!selected && !loadingSpaces && spaces.length > 0 ? (
-        <p
-          style={{
-            padding: '0 16px 12px',
-            margin: 0,
-            fontSize: 14,
-            color: 'var(--text-muted)',
-          }}
-        >
+        <p style={{ padding: '0 16px 12px', margin: 0, fontSize: 14, color: 'var(--text-muted)' }}>
           Elegi un espacio para abrir el chat de ese tema.
         </p>
       ) : null}
 
       {!selected ? (
         loadingSpaces ? (
-          <div className="loading-spinner">
-            <div className="spinner" />
-          </div>
+          <div className="loading-spinner"><div className="spinner" /></div>
         ) : spaces.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-title">Sin espacios</div>
@@ -173,35 +174,20 @@ export function AcademicHelp() {
         )
       ) : (
         <div className="chat-area" style={{ height: 'calc(100vh - 57px)' }}>
-          <p
-            style={{
-              padding: '8px 16px',
-              margin: 0,
-              fontSize: 13,
-              color: 'var(--text-muted)',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
+          <p style={{ padding: '8px 16px', margin: 0, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
             {selected.description}
           </p>
           <div className="chat-messages">
             {loadingMsgs ? (
-              <div className="loading-spinner" style={{ padding: 24 }}>
-                <div className="spinner" />
-              </div>
+              <div className="loading-spinner" style={{ padding: 24 }}><div className="spinner" /></div>
             ) : messages.length === 0 ? (
               <div className="empty-state">
                 <p>Sin mensajes aun. {user ? 'Se el primero en pedir ayuda.' : 'Inicia sesion para escribir.'}</p>
               </div>
             ) : (
               messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`chat-bubble ${msg.fromUserId === Number(user?.id) ? 'sent' : 'received'}`}
-                >
-                  <div style={{ fontSize: 11, opacity: 0.75, marginBottom: 4 }}>
-                    Usuario {msg.fromUserId}
-                  </div>
+                <div key={msg.id} className={`chat-bubble ${msg.fromUserId === Number(user?.id) ? 'sent' : 'received'}`}>
+                  <div style={{ fontSize: 11, opacity: 0.75, marginBottom: 4 }}>Usuario {msg.fromUserId}</div>
                   {msg.text}
                 </div>
               ))
@@ -219,12 +205,7 @@ export function AcademicHelp() {
                   onKeyDown={handleKeyDown}
                   disabled={sending}
                 />
-                <button
-                  type="button"
-                  className="chat-send-btn"
-                  onClick={handleSend}
-                  disabled={!newMsg.trim() || sending}
-                >
+                <button type="button" className="chat-send-btn" onClick={handleSend} disabled={!newMsg.trim() || sending}>
                   &#10148;
                 </button>
               </>
