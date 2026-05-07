@@ -34,7 +34,7 @@ export function Home() {
   const loadFeed = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/feed')
+      const { data } = await api.get('/api/posts')
       const feedData = data.data || data
       setPosts(Array.isArray(feedData) ? feedData : [])
     } catch {
