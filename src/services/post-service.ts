@@ -55,7 +55,7 @@ export class PostService {
             imageUrl: imageUrl ?? null,
             createdAt: new Date().toISOString(),
             type,
-            university: type === "normal" ? null : userUniversity ?? null
+            university: userUniversity ?? null,
         };
 
         return this.repo.create(post);
@@ -76,6 +76,18 @@ export class PostService {
         if (!deleted) throw new NotFoundError("Post not found");
 
         return { message: "Post deleted" };
+    }
+
+    /** Normal posts for home timeline (UUID postIds; works with interactions). */
+    async getSocialFeed(): Promise<Post[]> {
+        const posts: Post[] = await this.repo.findAll();
+        return posts
+            .filter((p: Post) => p.type === undefined || p.type === "normal")
+            .sort(
+                (a: Post, b: Post) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+            );
     }
 
     // 🚀 NUEVO: noticias/anuncios

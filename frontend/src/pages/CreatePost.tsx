@@ -46,7 +46,7 @@ export function CreatePost() {
       let imageUrl: string | undefined
       if (selectedFile) {
         setStatus('Subiendo imagen...')
-        const { data: uploadData } = await api.get('/api/feed/upload-url', {
+        const { data: uploadData } = await api.get('/api/posts/upload-url', {
           params: { fileName: selectedFile.name },
         })
         const { url, key } = uploadData.data
@@ -58,7 +58,7 @@ export function CreatePost() {
         imageUrl = key
       }
       setStatus('Publicando...')
-      await api.post('/api/feed', { text: text.trim(), imageUrl })
+      await api.post('/api/posts/', { text: text.trim(), imageUrl })
       navigate('/')
     } catch {
       setStatus('Error al publicar')

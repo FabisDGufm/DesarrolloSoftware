@@ -12,13 +12,13 @@ import { buildPostPartitionKey } from '../utils/post-key.js';
 const TABLE = 'PostInteractions';
 
 export class PostInteractionRepository {
-    private pk(authorId: number, postId: number, postCreatedAt: Date): string {
+    private pk(authorId: number, postId: string, postCreatedAt: Date): string {
         return buildPostPartitionKey(authorId, postId, postCreatedAt);
     }
 
     async putLike(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<void> {
@@ -42,7 +42,7 @@ export class PostInteractionRepository {
 
     async deleteLike(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<void> {
@@ -59,7 +59,7 @@ export class PostInteractionRepository {
 
     async getLike(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<boolean> {
@@ -77,7 +77,7 @@ export class PostInteractionRepository {
 
     async listLikes(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date
     ): Promise<number[]> {
         const userIds: number[] = [];
@@ -106,7 +106,7 @@ export class PostInteractionRepository {
 
     async countLikes(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date
     ): Promise<number> {
         let total = 0;
@@ -133,7 +133,7 @@ export class PostInteractionRepository {
 
     async addComment(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number,
         commentId: string,
@@ -162,7 +162,7 @@ export class PostInteractionRepository {
 
     async listComments(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date
     ): Promise<PostComment[]> {
         const out: PostComment[] = [];
@@ -212,7 +212,7 @@ export class PostInteractionRepository {
 
     async getComment(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         commentId: string
     ): Promise<PostComment | null> {
@@ -249,7 +249,7 @@ export class PostInteractionRepository {
 
     async updateCommentText(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         commentId: string,
         newText: string
@@ -302,7 +302,7 @@ export class PostInteractionRepository {
 
     async deleteComment(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         commentId: string
     ): Promise<void> {
@@ -319,7 +319,7 @@ export class PostInteractionRepository {
 
     async recordShare(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<{ shareId: string; createdAt: Date }> {
@@ -346,7 +346,7 @@ export class PostInteractionRepository {
 
     async countShares(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date
     ): Promise<number> {
         let total = 0;
@@ -373,7 +373,7 @@ export class PostInteractionRepository {
 
     async putSave(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<void> {
@@ -397,7 +397,7 @@ export class PostInteractionRepository {
 
     async deleteSave(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<void> {
@@ -414,7 +414,7 @@ export class PostInteractionRepository {
 
     async getSave(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<boolean> {
@@ -432,7 +432,7 @@ export class PostInteractionRepository {
 
     async listSaves(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date
     ): Promise<number[]> {
         const userIds: number[] = [];
@@ -461,7 +461,7 @@ export class PostInteractionRepository {
 
     async recordRepost(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date,
         userId: number
     ): Promise<{ repostId: string; createdAt: Date }> {
@@ -488,7 +488,7 @@ export class PostInteractionRepository {
 
     async countReposts(
         authorId: number,
-        postId: number,
+        postId: string,
         postCreatedAt: Date
     ): Promise<number> {
         let total = 0;

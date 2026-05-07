@@ -12,6 +12,8 @@ router.get("/upload-url", requireAuth, enforceModerationPolicy, controller.getUp
 
 router.post("/", requireAuth, enforceModerationPolicy, controller.createPost);
 
+router.get("/social-feed", controller.getSocialFeed);
+
 router.get("/news", controller.getNewsFeed);
 
 router.get("/user/:authorId", controller.getPostsByUser);
