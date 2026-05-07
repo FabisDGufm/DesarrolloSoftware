@@ -215,29 +215,26 @@ export function Layout() {
       </main>
 
       <aside className="right-panel">
-        <div className="search-bar">
-          <span className="search-icon">&#9906;</span>
-          <input type="text" placeholder="Buscar en el pasillo..." />
-        </div>
 
-        <div className="trending-card">
-          <div className="trending-card-title">En el pasillo</div>
-          <div className="trending-item">
-            <div className="trending-item-category">Guatemala</div>
-            <div className="trending-item-name">Vida Universitaria</div>
-            <div className="trending-item-count">1,234 posts</div>
-          </div>
-          <div className="trending-item">
-            <div className="trending-item-category">Academico</div>
-            <div className="trending-item-name">Examenes Finales</div>
-            <div className="trending-item-count">890 posts</div>
-          </div>
-          <div className="trending-item">
-            <div className="trending-item-category">Tech</div>
-            <div className="trending-item-name">Desarrollo de Software</div>
-            <div className="trending-item-count">456 posts</div>
-          </div>
-        </div>
+      <div className="trending-card">
+  <div className="trending-card-title">Accesos rapidos</div>
+  <div className="trending-item" onClick={() => navigate('/ayuda')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Academico</div>
+    <div className="trending-item-name">Ayuda Academica</div>
+  </div>
+  <div className="trending-item" onClick={() => navigate('/debates')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Comunidad</div>
+    <div className="trending-item-name">Sin Filtro</div>
+  </div>
+  <div className="trending-item" onClick={() => navigate('/promotions')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Negocios</div>
+    <div className="trending-item-name">Emprendimientos</div>
+  </div>
+  <div className="trending-item" onClick={() => navigate('/amigos')} style={{ cursor: 'pointer' }}>
+    <div className="trending-item-category">Social</div>
+    <div className="trending-item-name">Amigos</div>
+  </div>
+</div>
 
         {isAuthenticated && <ConnectPanel currentUserId={Number(user?.id)} />}
       </aside>
