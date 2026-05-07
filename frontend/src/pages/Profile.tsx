@@ -34,7 +34,7 @@ interface Post {
 
 export function Profile() {
   const { id } = useParams<{ id: string }>()
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, setAuth } = useAuthStore()
   const profileId = id || user?.id
   const isOwnProfile = !id || id === String(user?.id)
 
@@ -99,6 +99,7 @@ export function Profile() {
         headers: { 'Content-Type': file.type },
       })
       await api.put(`/api/users/${user.id}/profile-photo`, { profilePhoto: key })
+      setAuth({ ...user, profilePhoto: key }, useAuthStore.getState().token || '')
       loadProfile()
     } catch (err) {
       console.error('Error subiendo foto de perfil:', err)
@@ -159,8 +160,12 @@ export function Profile() {
                 onChange={handlePhotoUpload}
                 style={{ display: 'none' }}
               />
-              <button className="profile-edit-btn" disabled={uploading}>
-                {uploading ? 'Subiendo...' : 'Editar perfil'}
+              <button
+                className="profile-edit-btn"
+                disabled={uploading}
+                onClick={() => photoRef.current?.click()}
+              >
+                {uploading ? 'Subiendo...' : 'Cambiar foto'}
               </button>
             </>
           )}
