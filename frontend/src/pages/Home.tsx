@@ -10,7 +10,7 @@ interface Post {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
-  university?: string
+  university?: string | null
 }
 
 type Tab = 'foryou' | 'university' | 'following'
@@ -34,7 +34,7 @@ export function Home() {
   const loadFeed = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/feed')
+      const { data } = await api.get('/api/posts/social-feed')
       const feedData = data.data || data
       setPosts(Array.isArray(feedData) ? feedData : [])
     } catch {
@@ -65,7 +65,7 @@ export function Home() {
     try {
       let imageUrl: string | undefined
       if (composeFile) {
-        const { data: uploadData } = await api.get('/api/feed/upload-url', {
+        const { data: uploadData } = await api.get('/api/posts/upload-url', {
           params: { fileName: composeFile.name },
         })
         const { url, key } = uploadData.data
@@ -76,7 +76,7 @@ export function Home() {
         })
         imageUrl = key
       }
-      await api.post('/api/feed', { text: composeText.trim(), imageUrl })
+      await api.post('/api/posts/', { text: composeText.trim(), imageUrl })
       setComposeText('')
       removeImage()
       loadFeed()

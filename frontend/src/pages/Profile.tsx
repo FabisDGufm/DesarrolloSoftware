@@ -44,7 +44,7 @@ export function Profile() {
     try {
       const [profileRes, postsRes] = await Promise.allSettled([
         api.get(`/profile/${profileId}`),
-        api.get(`/api/feed/user/${profileId}`),
+        api.get(`/api/posts/user/${profileId}`),
       ])
 
       if (profileRes.status === 'fulfilled') {

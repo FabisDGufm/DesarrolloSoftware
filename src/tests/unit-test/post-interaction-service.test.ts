@@ -56,7 +56,7 @@ describe('PostInteractionService', () => {
         await service.like(5, '1', '10', { createdAt });
         expect(repo.putLike).toHaveBeenCalledWith(
             1,
-            10,
+            '10',
             new Date(createdAt),
             5
         );
@@ -107,7 +107,7 @@ describe('PostInteractionService', () => {
         await service.save(3, '1', '2', { createdAt });
         expect(repo.putSave).toHaveBeenCalledWith(
             1,
-            2,
+            '2',
             new Date(createdAt),
             3
         );

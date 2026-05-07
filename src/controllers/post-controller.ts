@@ -93,6 +93,22 @@ export class PostController {
         }
     };
 
+    getSocialFeed = async (
+        _req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const posts = await this.service.getSocialFeed();
+            res.status(200).json({
+                status: "success",
+                data: posts,
+            });
+        } catch (e) {
+            next(e);
+        }
+    };
+
     // 🚀 NUEVO (ARREGLADO)
     getNewsFeed = async (
         req: Request,

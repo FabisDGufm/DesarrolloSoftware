@@ -8,6 +8,7 @@ import type { PostInteractionRepository } from '../repositories/post-interaction
 import {
     parsePostCreatedAt,
     parsePositiveIntParam,
+    parsePostIdParam,
 } from '../utils/post-key.js';
 import {
     ForbiddenError,
@@ -22,9 +23,9 @@ export class PostInteractionService {
         authorIdRaw: string,
         postIdRaw: string,
         createdAtRaw: unknown
-    ): { authorId: number; postId: number; postCreatedAt: Date } {
+    ): { authorId: number; postId: string; postCreatedAt: Date } {
         const authorId = parsePositiveIntParam(authorIdRaw, 'authorId');
-        const postId = parsePositiveIntParam(postIdRaw, 'postId');
+        const postId = parsePostIdParam(postIdRaw, 'postId');
         const postCreatedAt = parsePostCreatedAt(createdAtRaw);
         return { authorId, postId, postCreatedAt };
     }
