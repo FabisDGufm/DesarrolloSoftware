@@ -32,20 +32,33 @@ export function Home() {
     loadFeed()
   }, [tab])
 
-  /* =========================
-     FEED LOGIC (FIX REAL)
-  ========================= */
   const loadFeed = async () => {
     setLoading(true)
 
     try {
-      let data: Post[] = []
+      let data: any
 
-      // =========================
-      // FOLLOWING (FRIENDS ONLY)
-      // =========================
-      if (tab === 'following') {
-        // 1. obtener amigos aceptados
+      // 🔥 POSTS NORMALES
+      if (tab === 'foryou') {
+        const res = await api.get('/api/posts/social-feed')
+        data = res.data.data || res.data
+      }
+
+      // 🎓 UNIVERSIDAD
+      else if (tab === 'university') {
+        const res = await api.get('/api/posts/social-feed')
+        const feed = res.data.data || res.data
+
+        data = Array.isArray(feed)
+          ? feed.filter(
+              (p: Post) => p.university && p.university === user?.university
+            )
+          : []
+      }
+
+      
+      else if (tab === 'following') {
+        // 1. obtener amigos
         const friendsRes = await api.get(
           `/api/user-relations/${user?.id}/friends`
         )
@@ -53,37 +66,29 @@ export function Home() {
         const friendIds: number[] =
           friendsRes.data.data || friendsRes.data || []
 
-        // 2. incluir al usuario mismo (opcional)
-        const authorIds = [user?.id, ...friendIds]
+        if (!friendIds.length) {
+          setPosts([])
+          setLoading(false)
+          return
+        }
 
-        // 3. obtener posts de esos usuarios
+        // 2. traer posts de esos amigos
         const postsRes = await api.post('/api/posts/by-authors', {
-          authorIds,
+          authorIds: friendIds,
         })
 
-        data = postsRes.data.data || postsRes.data || []
-      }
-
-      // =========================
-      // FOR YOU + UNIVERSITY
-      // =========================
-      else {
-        const res = await api.get('/api/posts/social-feed')
-        data = res.data.data || res.data || []
+        data = postsRes.data.data || postsRes.data
       }
 
       setPosts(Array.isArray(data) ? data : [])
     } catch (err) {
-      console.error('feed error', err)
+      console.error(err)
       setPosts([])
     } finally {
       setLoading(false)
     }
   }
 
-  /* =========================
-     IMAGE HANDLING
-  ========================= */
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !file.type.startsWith('image/')) return
@@ -101,9 +106,6 @@ export function Home() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  /* =========================
-     CREATE POST
-  ========================= */
   const handlePublish = async () => {
     if (!isAuthenticated || (!composeText.trim() && !composeFile)) return
 
@@ -113,12 +115,9 @@ export function Home() {
       let imageUrl: string | undefined
 
       if (composeFile) {
-        const { data: uploadData } = await api.get(
-          '/api/posts/upload-url',
-          {
-            params: { fileName: composeFile.name },
-          }
-        )
+        const { data: uploadData } = await api.get('/api/posts/upload-url', {
+          params: { fileName: composeFile.name },
+        })
 
         const { url, key } = uploadData.data
 
@@ -139,28 +138,11 @@ export function Home() {
       setComposeText('')
       removeImage()
       loadFeed()
-    } catch (err) {
-      console.error(err)
     } finally {
       setPublishing(false)
     }
   }
 
-  /* =========================
-     FILTER UNIVERSITY
-  ========================= */
-  const filteredPosts =
-    tab === 'university'
-      ? posts.filter(
-          (p) =>
-            p.university &&
-            p.university === user?.university
-        )
-      : posts
-
-  /* =========================
-     UI
-  ========================= */
   return (
     <>
       <div className="page-header">
@@ -208,10 +190,7 @@ export function Home() {
             {composePreview && (
               <div className="compose-image-preview">
                 <img src={composePreview} alt="preview" />
-                <button
-                  className="compose-image-remove"
-                  onClick={removeImage}
-                >
+                <button className="compose-image-remove" onClick={removeImage}>
                   X
                 </button>
               </div>
@@ -250,12 +229,12 @@ export function Home() {
         <div className="loading-spinner">
           <div className="spinner" />
         </div>
-      ) : filteredPosts.length === 0 ? (
+      ) : posts.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-title">No hay posts</div>
         </div>
       ) : (
-        filteredPosts.map((post) => (
+        posts.map((post) => (
           <PostCard
             key={`${post.authorId}-${post.postId}`}
             authorId={post.authorId}
