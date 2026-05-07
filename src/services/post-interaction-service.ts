@@ -5,6 +5,8 @@ import type {
     PostSaveSummary,
 } from '../models/post-interaction.js';
 import type { PostInteractionRepository } from '../repositories/post-interaction-repository.js';
+import type { PostRepository } from '../repositories/post-repository.js';
+import type { Post } from '../models/post.js';
 import {
     parsePostCreatedAt,
     parsePositiveIntParam,
@@ -17,7 +19,10 @@ import {
 } from '../utils/custom-errors.js';
 
 export class PostInteractionService {
-    constructor(private readonly repo: PostInteractionRepository) {}
+    constructor(
+        private readonly repo: PostInteractionRepository,
+        private readonly posts: PostRepository
+    ) {}
 
     private resolvePost(
         authorIdRaw: string,
@@ -337,5 +342,25 @@ export class PostInteractionService {
             postCreatedAt
         );
         return { count };
+    }
+
+    /** Lista posts guardados por el usuario (tabla Posts + ítem SAVE en Dynamo). */
+    async listMySavedPosts(userId: number): Promise<Post[]> {
+        const refs = await this.repo.listSavedRefsForUser(userId);
+        refs.sort(
+            (a, b) =>
+                new Date(b.savedAtIso).getTime() -
+                new Date(a.savedAtIso).getTime()
+        );
+        const seen = new Set<string>();
+        const result: Post[] = [];
+        for (const ref of refs) {
+            const key = `${ref.authorId}:${ref.postId}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            const post = await this.posts.findById(ref.authorId, ref.postId);
+            if (post) result.push(post);
+        }
+        return result;
     }
 }

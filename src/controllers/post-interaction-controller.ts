@@ -283,4 +283,22 @@ export class PostInteractionController {
             next(e);
         }
     };
+
+    listMySavedPosts = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const userId = req.userId;
+            if (userId === undefined) {
+                next(new UnauthorizedError('Unauthorized'));
+                return;
+            }
+            const data = await this.service.listMySavedPosts(userId);
+            res.status(200).json({ status: 'success', data });
+        } catch (e) {
+            next(e);
+        }
+    };
 }

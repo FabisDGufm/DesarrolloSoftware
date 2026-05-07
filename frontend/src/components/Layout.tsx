@@ -121,6 +121,12 @@ export function Layout() {
             <span className="nav-icon">&#9906;</span>
             <span>Explorar</span>
           </NavLink>
+          {isAuthenticated && (
+            <NavLink to="/guardados" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <span className="nav-icon">&#9733;</span>
+              <span>Guardados</span>
+            </NavLink>
+          )}
           <NavLink to="/amigos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#128101;</span>
             <span>Amigos</span>

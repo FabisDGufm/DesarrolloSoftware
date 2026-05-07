@@ -7,6 +7,8 @@ import { enforceModerationPolicy } from '../middlewares/moderation-policy-middle
 const router = Router();
 const controller = new PostInteractionController(postInteractionService);
 
+router.get('/me/saved-posts', requireAuth, controller.listMySavedPosts);
+
 router.post(
     '/posts/:authorId/:postId/like',
     requireAuth,
