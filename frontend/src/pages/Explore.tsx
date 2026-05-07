@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { PostCard } from '../components/PostCard'
+import { NewsCard } from '../components/NewsCard'
 
 interface PostItem {
   authorId: number
@@ -9,6 +10,8 @@ interface PostItem {
   imageUrl?: string | null
   createdAt: string
   authorName?: string
+  type?: 'normal' | 'news' | 'announcement'
+  university?: string | null
 }
 
 interface AnnouncementItem {
@@ -38,6 +41,7 @@ type Tab = 'posts' | 'news' | 'announcements'
 export function Explore() {
   const [tab, setTab] = useState<Tab>('posts')
   const [query, setQuery] = useState('')
+  const [allPosts, setAllPosts] = useState<PostItem[]>([])   // cache completo
   const [results, setResults] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -60,62 +64,66 @@ export function Explore() {
   }, [tab])
 
   /* =========================
-     POSTS SEARCH
+     BÚSQUEDA EN TIEMPO REAL
+     Filtra sobre el cache local, sin llamadas extra
   ========================= */
   useEffect(() => {
     if (tab !== 'posts') return
 
-    const timeout = setTimeout(() => {
-      if (!query.trim()) {
-        loadAllPosts()
-      } else {
-        searchPosts()
-      }
-    }, 300)
+    const q = query.trim().toLowerCase()
 
-    return () => clearTimeout(timeout)
-  }, [query, tab])
-
-  const searchPosts = async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get('/api/explore/search', {
-        params: { q: query }
-      })
-      setResults(Array.isArray(data.data) ? data.data : [])
-    } finally {
-      setLoading(false)
+    if (!q) {
+      setResults(allPosts)
+      return
     }
-  }
 
+    const filtered = allPosts.filter((p) =>
+      p.text?.toLowerCase().includes(q) ||
+      p.authorName?.toLowerCase().includes(q)
+    )
+
+    setResults(filtered)
+  }, [query, allPosts, tab])
+
+  /* =========================
+     POSTS — carga desde /api/posts/
+     que usa getAllPosts → repo.findAll()
+  ========================= */
   const loadAllPosts = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/explore/search', {
-        params: { q: '' }
-      })
-      setResults(Array.isArray(data.data) ? data.data : [])
+      const { data } = await api.get('/api/posts/')
+      
+      // Filtrar solo posts normales (excluir news/announcements internos)
+      const posts: PostItem[] = (
+        Array.isArray(data.data) ? data.data : []
+      ).filter(
+        (p: PostItem) => p.type === 'normal' || !p.type
+      )
+
+      setAllPosts(posts)
+      setResults(posts)
     } finally {
       setLoading(false)
     }
   }
 
   /* =========================
-     NEWS (SOLO DISPLAY LIMPIO)
+     NEWS
   ========================= */
   const loadNews = async () => {
     setLoading(true)
     try {
       const { data } = await api.get('/api/news/guatemala')
 
-      const normalized =
-        (data.data || []).map((n: any) => ({
-          title: n.title,
-          description: n.description || n.text,
-          imageUrl: n.imageUrl,
-          url: n.url,
-          publishedAt: n.publishedAt
-        }))
+      const normalized = (data.data || []).map((n: any) => ({
+        title: n.title,
+        description: n.description || n.text,
+        imageUrl: n.imageUrl,
+        url: n.url,
+        publishedAt: n.publishedAt,
+        source: n.source,
+      }))
 
       setResults(normalized)
     } finally {
@@ -145,14 +153,13 @@ export function Explore() {
         title: announcementTitle,
         text: announcementText,
         eventDate: eventDate || undefined,
-        imageUrl: null
+        imageUrl: null,
       })
 
       setAnnouncementTitle('')
       setAnnouncementText('')
       setEventDate('')
       setShowModal(false)
-
       loadAnnouncements()
     } finally {
       setLoading(false)
@@ -160,8 +167,7 @@ export function Explore() {
   }
 
   const isPost = (r: any): r is PostItem => 'postId' in r
-  const isAnnouncement = (r: any): r is AnnouncementItem =>
-    'announcementId' in r
+  const isAnnouncement = (r: any): r is AnnouncementItem => 'announcementId' in r
   const isNews = (r: any): r is NewsItem =>
     'title' in r && !('postId' in r) && !('announcementId' in r)
 
@@ -170,9 +176,8 @@ export function Explore() {
   ========================= */
   return (
     <>
-      {/* HEADER (IDÉNTICO AL TUYO) */}
+      {/* HEADER */}
       <div className="page-header">
-
         {tab === 'posts' && (
           <div className="search-bar">
             <span className="search-icon">🔍</span>
@@ -192,14 +197,12 @@ export function Explore() {
           >
             Posts
           </button>
-
           <button
             className={`page-tab ${tab === 'news' ? 'active' : ''}`}
             onClick={() => setTab('news')}
           >
             Noticias
           </button>
-
           <button
             className={`page-tab ${tab === 'announcements' ? 'active' : ''}`}
             onClick={() => setTab('announcements')}
@@ -231,19 +234,16 @@ export function Explore() {
               value={announcementTitle}
               onChange={(e) => setAnnouncementTitle(e.target.value)}
             />
-
             <textarea
               placeholder="Escribe tu anuncio..."
               value={announcementText}
               onChange={(e) => setAnnouncementText(e.target.value)}
             />
-
             <input
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
             />
-
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowModal(false)}>Cancelar</button>
               <button onClick={createAnnouncement}>Publicar</button>
@@ -259,7 +259,11 @@ export function Explore() {
         </div>
       ) : results.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">Sin resultados</div>
+          <div className="empty-state-title">
+            {tab === 'posts' && query
+              ? `Sin resultados para "${query}"`
+              : 'Sin resultados'}
+          </div>
         </div>
       ) : (
         results.map((r, i) => {
@@ -291,27 +295,15 @@ export function Explore() {
 
           if (isNews(r)) {
             return (
-              <div key={`news-${i}`} className="post-card">
-                <h3>{r.title}</h3>
-                <p>{r.description}</p>
-
-                {r.imageUrl && (
-                  <img
-                    src={r.imageUrl}
-                    style={{ width: '100%', borderRadius: 12, marginTop: 10 }}
-                  />
-                )}
-
-                {r.url && (
-                  <a href={r.url} target="_blank">
-                    Leer más
-                  </a>
-                )}
-
-                {r.publishedAt && (
-                  <small>{new Date(r.publishedAt).toLocaleString()}</small>
-                )}
-              </div>
+              <NewsCard
+                key={`news-${i}`}
+                title={r.title ?? ''}
+                description={r.description}
+                imageUrl={r.imageUrl}
+                url={r.url}
+                publishedAt={r.publishedAt}
+                source={r.source}
+              />
             )
           }
 
