@@ -51,7 +51,9 @@ export function AcademicHelp() {
         const { data } = await api.get(`/api/help-spaces/${selected.slug}/messages`)
         const payload = data.data ?? data
         const msgs = payload?.messages ?? payload
-        setMessages(Array.isArray(msgs) ? msgs : [])
+        setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) => 
+  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+) : [])
       } catch {
         setMessages([])
       } finally {
@@ -76,7 +78,9 @@ export function AcademicHelp() {
       const { data } = await api.get(`/api/help-spaces/${selected.slug}/messages`)
       const payload = data.data ?? data
       const msgs = payload?.messages ?? payload
-      setMessages(Array.isArray(msgs) ? msgs : [])
+      setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) => 
+  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+) : [])
     } catch {
       /* ignore */
     } finally {
