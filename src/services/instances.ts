@@ -56,7 +56,7 @@ export const postInteractionService = new PostInteractionService(
 );
 
 export const messageService = new MessageService(messageRepository);
-export const helpSpaceService = new HelpSpaceService(helpSpaceRepository);
+export const helpSpaceService = new HelpSpaceService(helpSpaceRepository, userRepository);
 export const moderationService = new ModerationService(moderationRepository, userRepository);
 export const userProfileService = new UserProfileService(userService, relationService);
 

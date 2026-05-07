@@ -13,6 +13,7 @@ interface HelpMsg {
   id: string
   spaceSlug: string
   fromUserId: number
+  fromUserName?: string
   text: string
   createdAt: string
 }
@@ -28,6 +29,7 @@ export function AcademicHelp() {
   const [loadingSpaces, setLoadingSpaces] = useState(true)
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const [userNames, setUserNames] = useState<Record<number, string>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -53,6 +55,22 @@ export function AcademicHelp() {
     }
   }, [spaces, searchParams])
 
+  const resolveUserNames = async (msgs: HelpMsg[]) => {
+    const ids = [...new Set(msgs.map(m => m.fromUserId))].filter(id => !userNames[id])
+    if (ids.length === 0) return
+    try {
+      const { data } = await api.get('/api/users')
+      const users = data.data ?? data
+      if (Array.isArray(users)) {
+        const map: Record<number, string> = {}
+        users.forEach((u: { id: number; name?: string }) => {
+          if (u.name) map[u.id] = u.name
+        })
+        setUserNames(prev => ({ ...prev, ...map }))
+      }
+    } catch { /* ignore */ }
+  }
+
   useEffect(() => {
     if (!selected) return
     const loadMsgs = async () => {
@@ -61,9 +79,11 @@ export function AcademicHelp() {
         const { data } = await api.get(`/api/help-spaces/${selected.slug}/messages`)
         const payload = data.data ?? data
         const msgs = payload?.messages ?? payload
-        setMessages(Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) =>
+        const sorted = Array.isArray(msgs) ? msgs.sort((a: HelpMsg, b: HelpMsg) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        ) : [])
+        ) : []
+        setMessages(sorted)
+        resolveUserNames(sorted)
       } catch {
         setMessages([])
       } finally {
@@ -187,7 +207,7 @@ export function AcademicHelp() {
             ) : (
               messages.map((msg) => (
                 <div key={msg.id} className={`chat-bubble ${msg.fromUserId === Number(user?.id) ? 'sent' : 'received'}`}>
-                  <div style={{ fontSize: 11, opacity: 0.75, marginBottom: 4 }}>Usuario {msg.fromUserId}</div>
+                  <div style={{ fontSize: 11, opacity: 0.75, marginBottom: 4 }}>{msg.fromUserName || userNames[msg.fromUserId] || `Usuario ${msg.fromUserId}`}</div>
                   {msg.text}
                 </div>
               ))

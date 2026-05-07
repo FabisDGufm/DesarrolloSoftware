@@ -1,5 +1,6 @@
 import type { HelpSpaceMeta, HelpSpaceMessage } from '../models/help-space.js';
 import type { HelpSpaceRepository } from '../repositories/help-space-repository.js';
+import type { UserRepository } from '../repositories/user-repository.js';
 import { NotFoundError, ValidationError } from '../utils/custom-errors.js';
 
 const HELP_SPACES: readonly HelpSpaceMeta[] = [
@@ -28,7 +29,11 @@ const HELP_SPACES: readonly HelpSpaceMeta[] = [
 const SLUG_SET = new Set(HELP_SPACES.map((s) => s.slug));
 
 export class HelpSpaceService {
-    constructor(private readonly repo: HelpSpaceRepository) {}
+    private userRepo: UserRepository | undefined;
+
+    constructor(private readonly repo: HelpSpaceRepository, userRepo?: UserRepository) {
+        this.userRepo = userRepo;
+    }
 
     listSpaces(): HelpSpaceMeta[] {
         return [...HELP_SPACES];
@@ -48,7 +53,7 @@ export class HelpSpaceService {
         slugRaw: string,
         limitRaw?: unknown,
         exclusiveStartKey?: Record<string, unknown>
-    ): Promise<{ messages: HelpSpaceMessage[]; nextKey?: Record<string, unknown> }> {
+    ): Promise<{ messages: (HelpSpaceMessage & { fromUserName?: string | undefined })[]; nextKey?: Record<string, unknown> }> {
         const slug = this.parseSlug(slugRaw);
         this.getSpaceMeta(slug);
         const limit =
@@ -58,7 +63,21 @@ export class HelpSpaceService {
                   ? limitRaw
                   : 50;
         const safe = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 100) : 50;
-        return this.repo.listMessages(slug, safe, exclusiveStartKey);
+        const result = await this.repo.listMessages(slug, safe, exclusiveStartKey);
+
+        if (!this.userRepo) return result;
+
+        const userIds = [...new Set(result.messages.map(m => m.fromUserId))];
+        const users = await Promise.all(userIds.map(id => this.userRepo!.findById(id)));
+        const nameMap = new Map(users.filter(Boolean).map(u => [u!.id, u!.name]));
+
+        return {
+            ...result,
+            messages: result.messages.map(m => ({
+                ...m,
+                fromUserName: nameMap.get(m.fromUserId) ?? undefined,
+            })),
+        };
     }
 
     async postMessage(

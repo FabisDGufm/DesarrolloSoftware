@@ -202,7 +202,11 @@ export function Home() {
       {isAuthenticated && (
         <div className="compose-area">
           <div className="avatar">
-            {(user?.name || '?')[0]!.toUpperCase()}
+            {user?.profilePhoto ? (
+              <img src={user.profilePhoto.startsWith('http') ? user.profilePhoto : `https://social-media-ufm-elpasillo.s3.amazonaws.com/${user.profilePhoto}`} alt={user.name} />
+            ) : (
+              (user?.name || '?')[0]!.toUpperCase()
+            )}
           </div>
 
           <div className="compose-input">
