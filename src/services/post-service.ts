@@ -117,12 +117,12 @@ export class PostService {
             });
     }
 
-    // 🔥 TODOS LOS POSTS
+  
     async getAllPosts() {
         return this.repo.findAll();
     }
 
-    // 🔥 NEWS / ANNOUNCEMENTS
+    
     async getNewsFeed(userUniversity?: string) {
         const posts: Post[] = await this.repo.findAll();
 

@@ -13,11 +13,13 @@ export class AuthService {
         }
 
         const user = await this.userRepository.findByEmail(dto.email);
+
         if (!user) {
             throw new ValidationError("Invalid credentials");
         }
 
         const isValid = await bcrypt.compare(dto.password, user.password);
+
         if (!isValid) {
             throw new ValidationError("Invalid credentials");
         }
@@ -28,7 +30,13 @@ export class AuthService {
             );
         }
 
-        const token = this.generateToken(user.id, user.email);
+        const token = this.generateToken(
+            user.id,
+            user.email,
+            user.name,
+            user.university,
+            user.role
+        );
 
         return {
             user,
@@ -36,16 +44,27 @@ export class AuthService {
         };
     }
 
-    private generateToken(userId: number, email: string): string {
+    private generateToken(
+        userId: number,
+        email: string,
+        name: string,
+        university?: string | null,
+        role?: number
+    ): string {
         const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
 
         return jwt.sign(
             {
                 sub: userId,
-                email
+                email,
+                name,
+                university,
+                role
             },
             jwtSecretKey,
-            { expiresIn: "3d" }
+            {
+                expiresIn: "3d"
+            }
         );
     }
 }
