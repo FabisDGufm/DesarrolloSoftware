@@ -6,18 +6,21 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { PostRepository } from "../repositories/post-repository.js";
+import type { PostInteractionRepository } from "../repositories/post-interaction-repository.js";
 import { ValidationError, NotFoundError } from "../utils/custom-errors.js";
 import type { Post } from "../models/post.js";
 
 export class PostService {
     private repo: PostRepository;
+    private interactions: PostInteractionRepository;
 
     private s3 = new S3Client({
         region: process.env.AWS_REGION as string
     });
 
-    constructor(repo: PostRepository) {
+    constructor(repo: PostRepository, interactions: PostInteractionRepository) {
         this.repo = repo;
+        this.interactions = interactions;
     }
 
     async getUploadUrl(fileName: string) {
@@ -70,8 +73,42 @@ export class PostService {
         return post;
     }
 
-    async getPostsByUser(authorId: number) {
-        return this.repo.findByAuthor(authorId);
+    async getPostsByUser(authorId: number): Promise<Post[]> {
+        const own = await this.repo.findByAuthor(authorId);
+        const repostRefs =
+            await this.interactions.listRepostRefsForUser(authorId);
+
+        const repostPosts: Post[] = [];
+        for (const ref of repostRefs) {
+            const p = await this.repo.findById(
+                ref.originalAuthorId,
+                ref.postId
+            );
+            if (!p) continue;
+            repostPosts.push({
+                ...p,
+                isRepost: true,
+                repostedAt: ref.repostedAtIso,
+            });
+        }
+
+        const ownMarked = own.map((p) => ({
+            ...p,
+            isRepost: false as const,
+        }));
+
+        const merged = [...ownMarked, ...repostPosts];
+        merged.sort((a, b) => {
+            const ta = new Date(
+                a.isRepost && a.repostedAt ? a.repostedAt : a.createdAt
+            ).getTime();
+            const tb = new Date(
+                b.isRepost && b.repostedAt ? b.repostedAt : b.createdAt
+            ).getTime();
+            return tb - ta;
+        });
+
+        return merged;
     }
 
     async deletePost(authorId: number, postId: string) {

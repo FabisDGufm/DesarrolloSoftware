@@ -483,6 +483,79 @@ export class PostInteractionRepository {
         return out;
     }
 
+    /** Republicaciones hechas por el usuario (GSI1SK = REPOST#origAuthor#postId#createdMs#ts). */
+    async listRepostRefsForUser(userId: number): Promise<
+        { originalAuthorId: number; postId: string; repostedAtIso: string }[]
+    > {
+        const raw: {
+            originalAuthorId: number;
+            postId: string;
+            repostedAtIso: string;
+        }[] = [];
+        let lastKey: Record<string, unknown> | undefined;
+        do {
+            const r = await dynamo.send(
+                new QueryCommand({
+                    TableName: TABLE,
+                    IndexName: 'ByUser',
+                    KeyConditionExpression:
+                        'GSI1PK = :pk AND begins_with(GSI1SK, :prefix)',
+                    ExpressionAttributeValues: {
+                        ':pk': `USER#${userId}`,
+                        ':prefix': 'REPOST#',
+                    },
+                    ScanIndexForward: false,
+                    ExclusiveStartKey: lastKey,
+                })
+            );
+            for (const item of r.Items ?? []) {
+                const gsi = item['GSI1SK'];
+                const repostedAtIso =
+                    typeof item['createdAt'] === 'string'
+                        ? item['createdAt']
+                        : new Date().toISOString();
+                if (typeof gsi !== 'string' || !gsi.startsWith('REPOST#')) {
+                    continue;
+                }
+                const parts = gsi.slice('REPOST#'.length).split('#');
+                if (parts.length < 4) continue;
+                const originalAuthorId = Number.parseInt(parts[0]!, 10);
+                const postId = parts[1]!;
+                const createdMs = parts[2]!;
+                if (
+                    !Number.isFinite(originalAuthorId) ||
+                    !postId ||
+                    !/^\d+$/.test(createdMs)
+                ) {
+                    continue;
+                }
+                raw.push({ originalAuthorId, postId, repostedAtIso });
+            }
+            lastKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+        } while (lastKey);
+
+        const best = new Map<
+            string,
+            { originalAuthorId: number; postId: string; repostedAtIso: string }
+        >();
+        for (const ref of raw) {
+            const k = `${ref.originalAuthorId}:${ref.postId}`;
+            const prev = best.get(k);
+            if (
+                !prev ||
+                new Date(ref.repostedAtIso).getTime() >
+                    new Date(prev.repostedAtIso).getTime()
+            ) {
+                best.set(k, ref);
+            }
+        }
+        return [...best.values()].sort(
+            (a, b) =>
+                new Date(b.repostedAtIso).getTime() -
+                new Date(a.repostedAtIso).getTime()
+        );
+    }
+
     async listSaves(
         authorId: number,
         postId: string,
