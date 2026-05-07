@@ -19,13 +19,11 @@ export function Explore() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
-  const [hasSearched, setHasSearched] = useState(false)
 
-  // 🔥 RESET TOTAL al cambiar tab (evita bugs de “sticky posts”)
+  // 🔥 RESET AL CAMBIAR TAB
   useEffect(() => {
     setResults([])
     setQuery('')
-    setHasSearched(false)
 
     if (tab === 'news') {
       loadNews()
@@ -36,13 +34,12 @@ export function Explore() {
     }
   }, [tab])
 
-  // 🔎 SEARCH POSTS ONLY
+  // 🔎 SEARCH SOLO POSTS
   useEffect(() => {
     if (tab !== 'posts') return
 
     if (!query.trim()) {
       setResults([])
-      setHasSearched(false)
       return
     }
 
@@ -57,7 +54,6 @@ export function Explore() {
     if (!query.trim()) return
 
     setLoading(true)
-    setHasSearched(true)
 
     try {
       const { data } = await api.get('/api/explore/search', {
@@ -72,10 +68,9 @@ export function Explore() {
     }
   }
 
-  // 📰 NEWS (Prensa Libre backend)
+  // 📰 NEWS (Prensa Libre / RSS backend)
   const loadNews = async () => {
     setLoading(true)
-    setHasSearched(true)
 
     try {
       const { data } = await api.get('/api/news/guatemala')
@@ -90,7 +85,6 @@ export function Explore() {
   // 📢 ANNOUNCEMENTS
   const loadAnnouncements = async () => {
     setLoading(true)
-    setHasSearched(true)
 
     try {
       const { data } = await api.get('/api/announcements')
@@ -121,7 +115,7 @@ export function Explore() {
           />
         </div>
 
-        {/* SOLO 3 TABS */}
+        {/* TABS */}
         <div className="page-tabs">
           <button
             className={`page-tab ${tab === 'posts' ? 'active' : ''}`}
