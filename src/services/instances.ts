@@ -23,7 +23,8 @@ import { ModerationService } from './moderation-service.js';
 import { PromotionRepository } from "../repositories/promotion-repository.js";
 import { PromotionService } from "./promotion-service.js";
 
-export const postService = new PostService(new PostRepository());
+const postRepository = new PostRepository();
+export const postService = new PostService(postRepository);
 
 // Repositorios — UserRepository sigue en MariaDB via Prisma
 //               Los demás ahora usan DynamoDB
@@ -42,7 +43,8 @@ export const relationService = new UserRelationService(userRelationRepository);
 export const feedService = new FeedService(feedRepository);
 export const exploreService = new ExploreService(exploreRepository);
 export const postInteractionService = new PostInteractionService(
-    postInteractionRepository
+    postInteractionRepository,
+    postRepository
 );
 export const messageService = new MessageService(messageRepository);
 export const helpSpaceService = new HelpSpaceService(helpSpaceRepository);

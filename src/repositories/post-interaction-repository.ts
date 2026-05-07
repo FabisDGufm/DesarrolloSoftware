@@ -430,6 +430,59 @@ export class PostInteractionRepository {
         return Boolean(r.Item);
     }
 
+    /** Saves del usuario vía GSI ByUser (GSI1SK = SAVE#authorId#postId#ts). */
+    async listSavedRefsForUser(userId: number): Promise<
+        { authorId: number; postId: string; savedAtIso: string }[]
+    > {
+        const out: { authorId: number; postId: string; savedAtIso: string }[] =
+            [];
+        let lastKey: Record<string, unknown> | undefined;
+        do {
+            const r = await dynamo.send(
+                new QueryCommand({
+                    TableName: TABLE,
+                    IndexName: 'ByUser',
+                    KeyConditionExpression:
+                        'GSI1PK = :pk AND begins_with(GSI1SK, :prefix)',
+                    ExpressionAttributeValues: {
+                        ':pk': `USER#${userId}`,
+                        ':prefix': 'SAVE#',
+                    },
+                    ScanIndexForward: false,
+                    ExclusiveStartKey: lastKey,
+                })
+            );
+            for (const item of r.Items ?? []) {
+                const gsi = item['GSI1SK'];
+                const savedAt =
+                    typeof item['createdAt'] === 'string'
+                        ? item['createdAt']
+                        : new Date().toISOString();
+                if (typeof gsi !== 'string' || !gsi.startsWith('SAVE#')) {
+                    continue;
+                }
+                const rest = gsi.slice('SAVE#'.length);
+                const lastSep = rest.lastIndexOf('#');
+                if (lastSep <= 0) continue;
+                const tsPart = rest.slice(lastSep + 1);
+                const authorAndPost = rest.slice(0, lastSep);
+                const firstSep = authorAndPost.indexOf('#');
+                if (firstSep <= 0) continue;
+                const authorId = Number.parseInt(
+                    authorAndPost.slice(0, firstSep),
+                    10
+                );
+                const postId = authorAndPost.slice(firstSep + 1);
+                if (!Number.isFinite(authorId) || !postId || !/^\d+$/.test(tsPart)) {
+                    continue;
+                }
+                out.push({ authorId, postId, savedAtIso: savedAt });
+            }
+            lastKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+        } while (lastKey);
+        return out;
+    }
+
     async listSaves(
         authorId: number,
         postId: string,
