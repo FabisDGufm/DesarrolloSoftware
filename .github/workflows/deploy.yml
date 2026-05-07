@@ -1,23 +1,9 @@
-# Despliegue automático a EC2 (SCP + systemd).
-#
-# Secretos requeridos en el repo (Settings → Secrets and variables → Actions):
-#   EC2_HOST, EC2_USER, EC2_SSH_KEY
-#   PORT, DATABASE_URL, DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_HOST, DATABASE_PORT
-#   JWT_SECRET_KEY
-# Opcionales (solo si la API usa S3/Dynamo en prod): AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET_NAME
-#
-# En el servidor: directorio /var/www/social-media, usuario con sudo para systemctl y copiar unit file.
-
 name: Despliegue
-
 on:
   push:
     branches:
       - main
-      - development
-      - matifeb
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -25,55 +11,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies and build
-        run: |
-          npm ci
-          npx prisma generate
-          npm run build
-
-      - name: Deploy to EC2
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "dist/,generated/,node_modules/,package.json,package-lock.json,prisma/,prisma.config.ts,systemd/"
-          target: /var/www/social-media
-          overwrite: true
-
-      - name: Restart service
+      - name: Restart service on EC2
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-            cd /var/www/social-media
-            sudo cp systemd/social-media-api.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            ENV_FILE=/var/www/social-media/.env
-            {
-              echo "PORT=${{ secrets.PORT }}"
-              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-              echo "DATABASE_USER=${{ secrets.DATABASE_USER }}"
-              echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}"
-              echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}"
-              echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}"
-              echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}"
-              echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}"
-            } > "$ENV_FILE"
-            [ -n "${{ secrets.AWS_REGION }}" ] && echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> "$ENV_FILE" || true
-            [ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ] && echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> "$ENV_FILE" || true
-            [ -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ] && echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> "$ENV_FILE" || true
-            [ -n "${{ secrets.AWS_BUCKET_NAME }}" ] && echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> "$ENV_FILE" || true
-            npx prisma migrate deploy
-            sudo systemctl restart social-media-api
-            systemctl is-active --quiet social-media-api && echo "Service Running" || exit 1
+            cd /home/ubuntu/ElPasillo/DesarrolloSoftware
+            git pull origin main
+            npm install
+            npx prisma generate
+            npm run build
+            sudo systemctl restart DesarrolloSoftware-api
+            systemctl is-active --quiet DesarrolloSoftware-api && echo "Service Running" || exit 1
