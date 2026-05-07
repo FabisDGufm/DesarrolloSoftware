@@ -45,7 +45,7 @@ export function Messages() {
   const loadFriends = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get(`/api/users/${user!.id}/friends`)
+      const { data } = await api.get(`/api/user-relations/${user!.id}/friends`)
       const list = data.data || data
       setFriends(Array.isArray(list) ? list : [])
     } catch {

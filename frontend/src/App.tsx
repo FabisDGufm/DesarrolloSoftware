@@ -13,6 +13,7 @@ import { ModerationPanel } from './pages/ModerationPanel'
 import { Debates } from './pages/Debates'
 import { Promotions } from './pages/Promotions'
 import { CreatePromotion } from './pages/CreatePromotion'
+import { Friends } from './pages/Friends'
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/debates" element={<Debates />} />
         <Route path="/promotions" element={<Promotions />} />
         <Route path="/create-promotion" element={<CreatePromotion />} />
+        <Route path="/amigos" element={<Friends />} />
       </Route>
     </Routes>
   )

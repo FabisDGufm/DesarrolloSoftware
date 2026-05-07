@@ -33,6 +33,11 @@ export function Layout() {
             <span>Explorar</span>
           </NavLink>
 
+          <NavLink to="/amigos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+  <span className="nav-icon">&#128101;</span>
+  <span>Amigos</span>
+</NavLink>
+
           <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-icon">&#9883;</span>
             <span>Mensajes</span>
