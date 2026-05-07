@@ -39,26 +39,28 @@ export function PromotionCard({
         gap: 14,
       }}
     >
-      {imageUrl && (
+        {imageUrl && (
         <div
-          style={{
+            style={{
             borderRadius: 18,
             overflow: 'hidden',
             border: '1px solid var(--border-color)',
-          }}
+            background: '#111',
+            }}
         >
-          <img
+            <img
             src={`${import.meta.env.VITE_S3_BASE_URL}/${imageUrl}`}
             alt={title}
             style={{
-              width: '100%',
-              maxHeight: 420,
-              objectFit: 'cover',
-              display: 'block',
+                width: '100%',
+                height: 320,
+                objectFit: 'contain',
+                display: 'block',
+                background: '#111',
             }}
-          />
+            />
         </div>
-      )}
+        )}
 
       <div
         style={{
