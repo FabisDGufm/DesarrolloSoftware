@@ -20,7 +20,7 @@ export function Explore() {
   const [searching, setSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  // 🔎 SEARCH
+  // 🔎 SEARCH (independiente del tab)
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
@@ -55,7 +55,7 @@ export function Explore() {
     }
   }
 
-  // 📂 TAB CONTENT
+  // 📂 CARGA POR TAB
   const loadTabContent = async (selectedTab: Tab) => {
     setSearching(true)
     setHasSearched(false)
@@ -64,16 +64,18 @@ export function Explore() {
     try {
       let url = ''
 
+      // 🧱 POSTS (explorar general)
       if (selectedTab === 'posts') {
         url = '/api/explore/browse/posts'
       }
 
+      // 📰 NOTICIAS (RSS PRIMERO / PRIMAFORMA ORIGINAL)
       if (selectedTab === 'news') {
-        url = '/api/posts/news'
+        url = '/api/news/feed' // 👈 ESTE ES EL IMPORTANTE (Prensa Libre / RSS)
       }
 
+      // 📢 ANUNCIOS (vacío por ahora)
       if (selectedTab === 'announcements') {
-        // 🔥 todavía vacío (backend después)
         setResults([])
         setSearching(false)
         return
@@ -90,7 +92,6 @@ export function Explore() {
     }
   }
 
-  // cuando cambia tab
   useEffect(() => {
     loadTabContent(tab)
   }, [tab])
@@ -166,11 +167,18 @@ export function Explore() {
       ) : results.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-title">
-            {tab === 'announcements' ? 'Sin anuncios' : 'Sin contenido'}
+            {tab === 'announcements'
+              ? 'Sin anuncios'
+              : tab === 'news'
+              ? 'Cargando noticias...'
+              : 'Sin contenido'}
           </div>
+
           <p>
             {tab === 'announcements'
               ? 'Aún no hay anuncios disponibles'
+              : tab === 'news'
+              ? 'Cargando noticias desde fuentes externas...'
               : 'Explora contenido en esta sección'}
           </p>
         </div>
